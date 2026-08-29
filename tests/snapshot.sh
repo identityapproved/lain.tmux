@@ -1,17 +1,6 @@
 #!/usr/bin/env sh
 # Golden-file snapshots of the drawn status line.
-#
-# Everything else checks structure - that a format expands, that a colour pair
-# clears AA. This checks what is actually painted, escape by escape, which is
-# the only thing that catches a colour landing one ramp step off or a separator
-# losing its background.
-#
-# `capture-pane` cannot see a status line, and a headless server has no client
-# to draw one. So the session under test is attached inside a pane of a second
-# server, and the outer one is captured: the inner status line is the last row.
-#
-#   tests/snapshot.sh            check against tests/golden/
-#   tests/snapshot.sh --update   regenerate them
+
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -24,11 +13,6 @@ HEIGHT=12
 fail=0
 updated=0
 
-# Anything that varies by machine or by minute is excluded rather than filtered:
-# the clock and date are set to literal words, `node` is left out because the
-# hostname differs everywhere, window names are pinned, and the working
-# directory is fixed so the path basename is stable. A snapshot that needs
-# scrubbing is a snapshot that will rot.
 snap() {
 	name="$1"
 	shift
@@ -38,9 +22,6 @@ snap() {
 	tmux -L "$inner" -f /dev/null new-session -d -s wired -n main \
 		-x "$WIDTH" -y "$HEIGHT" -c /tmp
 	tmux -L "$inner" set -as terminal-features "*:RGB"
-	# Without this the window name follows whatever the shell is running at the
-	# moment of capture - `zsh` or `tmux` depending on timing - and the
-	# snapshots flap.
 	tmux -L "$inner" set -g automatic-rename off
 	tmux -L "$inner" set -g @lain_clock_format "CLOCK"
 	tmux -L "$inner" set -g @lain_date_format "DATE"
@@ -82,8 +63,6 @@ snap() {
 	fi
 }
 
-# A second window and a zoomed pane, so the window formats and the zoom flag
-# are covered rather than just the two end segments.
 _snap_windows() {
 	tmux -L "$1" new-window -n navi
 	tmux -L "$1" new-window -n cyberia

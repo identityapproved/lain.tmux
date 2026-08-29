@@ -1,8 +1,6 @@
 #!/usr/bin/env sh
-# The cache layer: sanitizing, and the daemon's lifecycle.
-#
-# The lifecycle assertions run against a real tmux server on its own socket,
-# because every guarantee here is about processes and options, not strings.
+# Value sanitizing and the daemon's lifecycle.
+
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -32,11 +30,8 @@ san() {
 
 echo "-- sanitizing"
 san "plain value" "main" "main"
-# A style directive in a cached value takes effect once substituted, so this is
-# the case that actually matters.
 san "style injection" 'x#[fg=red]y' 'x##[fg=red]y'
 san "double hash" 'a#b#c' 'a##b##c'
-# Not escaped: strftime runs before substitution, so these are already literal.
 san "percent left alone" '87%' '87%'
 san "strftime spec left alone" '%H:%M' '%H:%M'
 san "long value truncated" \
@@ -58,8 +53,6 @@ else
 	fail=1
 fi
 
-# A dynamic module opts out while its cache is empty, so a fresh session shows
-# no slot at all rather than an empty coloured block.
 case "$(t show -gv status-right)" in
 *lain_cache_psyche*)
 	printf 'FAIL  module compiled in before it had any value\n'
@@ -76,8 +69,6 @@ else
 	fail=1
 fi
 
-# The daemon re-applies the theme when the set of modules with values changes,
-# which is what gets the segment onto the bar without gating it.
 case "$(t show -gv status-right)" in
 *lain_cache_psyche*) printf 'ok    %-28s\n' "rebuilt after first value" ;;
 *)
@@ -86,8 +77,6 @@ case "$(t show -gv status-right)" in
 	;;
 esac
 
-# A module whose poller yields nothing must stay off the bar permanently, not
-# occupy an empty slot.
 t set -g @lain_modules_right "coolant psyche present_day"
 t run-shell "$PLUGIN_DIR/lain.tmux"
 sleep 3
@@ -109,8 +98,6 @@ else
 	fail=1
 fi
 
-# Reloading must not stack daemons. This is the guarantee that makes
-# `prefix + I` safe to press repeatedly.
 id_before="$(t show -gqv @lain_daemon_id)"
 i=0
 while [ "$i" -lt 3 ]; do
@@ -127,7 +114,6 @@ else
 	fail=1
 fi
 
-# No separate kill path: the loop notices the server is gone and returns.
 t kill-server 2>/dev/null || true
 sleep 4
 left="$(pgrep -f "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null | wc -l)"

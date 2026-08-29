@@ -1,50 +1,5 @@
 #!/usr/bin/env sh
-# Module registry.
-#
-# A module is a shell function that describes one segment; it never emits a
-# format string itself. The registry compiles that description into tmux
-# format, which is what keeps the separator logic in one place instead of
-# duplicated across every module.
-#
-# Contract - `lain_mod_<name>` sets these and returns 0, or returns 1 to opt
-# out (disabled by an option, or unavailable):
-#
-#   mod_icon    glyph key, or empty for no icon
-#   mod_text    tmux format for the body
-#   mod_fg      foreground when filled segments are off, or the text colour
-#   mod_bg      background, or empty for a flat segment
-#   mod_attr    style attributes; defaults to nobold, see below
-#   mod_cond    tmux condition selecting the alternate style, or empty
-#   mod_alt_fg  foreground while mod_cond holds
-#   mod_alt_bg  background while mod_cond holds
-#   mod_gate    tmux condition; the whole segment collapses to nothing when it
-#               is false, so the module costs no width at rest
-#   mod_deps    binaries the module needs; it opts out if any is missing
-#   mod_dynamic cache key. The module reads `@lain_cache_<key>`, which the
-#               daemon fills, and opts out entirely while that option is empty.
-#               A dynamic module also defines `lain_poll_<name>`, which prints
-#               the value and is the only thing in the plugin permitted to
-#               fork.
-#
-#               Opting out rather than gating is deliberate. A gated segment
-#               has to open from its neighbour and close back to it so the
-#               separator chain stays correct whether or not it fired, which
-#               shows up as a doubled separator - tolerable for `knights`,
-#               which is off almost always, and wrong for polled modules, which
-#               are the normal case. Instead the daemon re-applies the theme
-#               when a value appears or disappears, so the compiled format is
-#               always static and correctly chained. The value itself updates
-#               live through the option and needs no recompile.
-#
-# mod_attr defaults to `nobold` rather than empty on purpose. tmux style
-# attributes are sticky within a format string, so a segment that sets `bold`
-# leaves every following segment bold until something clears it. Declaring the
-# attribute on every segment is what stops one module's weight leaking into its
-# neighbours.
-#
-# Every module in v0.2 is static: it compiles to a native tmux format and
-# forks nothing. A module that needs a subprocess belongs behind the cache, not
-# here.
+# Module registry: modules describe a segment, this compiles it.
 
 LAIN_MODULES="layer knights node wired_path present_day psyche coolant layer_git"
 
@@ -76,12 +31,6 @@ lain_module_known() {
 	return 1
 }
 
-# lain_compile <name> <filled>
-#
-# Sets seg_text, seg_bg and seg_gate, or returns 1 if the module opted out. `filled` is
-# whether the current separator style paints backgrounds; a flat style drops
-# every bg and uses the module's fg directly, which is why a module declares
-# both rather than a single style string.
 lain_compile() {
 	_lc_name="$1"
 	_lc_filled="$2"
@@ -89,10 +38,6 @@ lain_compile() {
 	lain_mod_reset
 	"lain_mod_$_lc_name" || return 1
 
-	# A gate and a conditional restyle cannot coexist. The gate wraps the whole
-	# segment in a conditional and escapes every comma inside it, which would
-	# break the commas belonging to an inner `#{?...}`. Restyling a segment
-	# that may not exist is not a meaningful thing to ask for anyway.
 	if [ -n "$mod_gate" ] && [ -n "$mod_cond" ]; then
 		tmux display-message "lain.tmux: module $_lc_name sets both mod_gate and mod_cond"
 		return 1
@@ -103,15 +48,8 @@ lain_compile() {
 	done
 
 	if [ -n "$mod_dynamic" ]; then
-		# Nothing cached yet, or nothing to cache: leave the bar alone. A
-		# battery module on a desktop never comes back, and a permanently
-		# empty coloured block is worse than an absent segment.
 		lain_getv "@lain_cache_${mod_dynamic}" _lc_cached
 		[ -n "$_lc_cached" ] || return 1
-		# Plain `#{@...}`, never `#{E:@...}`. The cache holds data, not format:
-		# double expansion would evaluate whatever it contains, so a branch
-		# named `#{session_name}` would render as the session name. The daemon
-		# escapes `#` on the way in, since the drawn line is parsed for styles.
 		mod_text="#{@lain_cache_${mod_dynamic}}"
 	fi
 
@@ -123,9 +61,6 @@ lain_compile() {
 		_lc_alt="fg=${mod_alt_fg:-$mod_fg},bg=${mod_alt_bg:-$mod_bg}"
 	else
 		seg_bg=""
-		# A flat segment reads as the fill colour, since that is the colour the
-		# module actually identifies with. `layer` is ochre text flat, black on
-		# ochre filled - same identity, different rendering.
 		_lc_base="fg=${mod_bg:-$mod_fg}"
 		_lc_alt="fg=${mod_alt_bg:-${mod_alt_fg:-${mod_bg:-$mod_fg}}}"
 	fi
@@ -136,8 +71,6 @@ lain_compile() {
 	seg_gate="$mod_gate"
 
 	if [ -n "$mod_cond" ]; then
-		# Inside a conditional the style's own commas have to be escaped, or
-		# the conditional splits its arguments on them.
 		seg_text="#{?${mod_cond},#[$(lain_esc_comma "$_lc_alt")],#[$(lain_esc_comma "$_lc_base")]} ${_lc_body} "
 	else
 		seg_text="#[${_lc_base}] ${_lc_body} "

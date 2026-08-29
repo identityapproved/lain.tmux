@@ -1,9 +1,6 @@
 #!/usr/bin/env sh
-# Print the options table straight from the defaults table in src/options.sh,
-# so the README cannot document a default the code does not have.
-#
-#   docs/gen-options.sh          print the table
-#   docs/gen-options.sh --check  fail if README.md is out of date
+# Print the options table from the defaults table in src/options.sh.
+
 set -eu
 
 cd "$(dirname "$0")/.."

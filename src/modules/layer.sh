@@ -1,10 +1,6 @@
 #!/usr/bin/env sh
-# Session name. The identity segment, so it carries the fill colour.
-#
-# Doubles as the prefix indicator when `@lain_show_prefix` is on: the segment
-# flips to `accent` while the prefix is pending. Colour rather than a glyph, so
-# it survives a terminal with no icon font and costs no width. Use the
-# `knights` module instead to put the indicator in its own segment.
+# Session name, and the prefix indicator.
+
 lain_mod_layer() {
 	mod_icon="session"
 	mod_text='#S'

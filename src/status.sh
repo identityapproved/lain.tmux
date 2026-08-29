@@ -1,13 +1,5 @@
 #!/usr/bin/env sh
-# The status line: compile the module lists, then join them.
-#
-# Every segment is a native tmux format. There is no `#()` anywhere, so the bar
-# costs nothing per status-interval - no shell is forked, on any tmux version,
-# for any number of panes. Keep it that way when adding modules.
-#
-# A literal comma inside `#[...]` has to be written `#,` whenever the style
-# sits inside a `#{?...}` conditional, because the conditional splits its
-# arguments on unescaped commas first.
+# Status line: compile the module lists, then join them.
 
 lain_status_apply() {
 	lain_getv @lain_separator _sep
@@ -41,16 +33,6 @@ lain_status_apply() {
 	lain_set status-right "$(_lain_side right "$_mr")"
 }
 
-# _lain_side <left|right> <module list>
-#
-# Compiles each module, skipping any that opted out or is not a module name,
-# then joins them. Segments are collected as `bg US text` lines rather than an
-# array, because the shell dialect here has none.
-#
-# The delimiter is US (0x1f), not a tab. Tab counts as IFS whitespace, so `read`
-# would swallow the leading empty field of a segment with no background and
-# assign the text to the wrong variable - which silently drops every flat
-# segment.
 _lain_side() {
 	_ls_side="$1"
 	_ls_list="$2"
@@ -67,18 +49,6 @@ _lain_side() {
 	_lain_join "$_ls_side" "$_ls_acc"
 }
 
-# _lain_join <side> <accumulated segments>
-#
-# `square` and `none` need no glyph between segments - the colour change is the
-# boundary. `wire` draws a thin rule. `powerline` is the only style that has to
-# know both neighbours, since the glyph is painted in the outgoing segment's
-# background against the incoming one.
-#
-# Gated segments are the reason this is not a simple fold. A gated segment may
-# not be there, so it must not disturb the chain: it opens from the previous
-# background and closes straight back to it, and does not become the previous
-# background itself. That keeps the separator after it correct whether or not
-# it rendered, and works for any number of gated segments in a row.
 _lain_join() {
 	_lj_side="$1"
 	_lj_acc="$2"
@@ -114,22 +84,14 @@ _lain_join() {
 		_lj_unit="${_lj_open}${_lj_text}${_lj_close}"
 
 		if [ -n "$_lj_gate" ]; then
-			# The unit becomes one branch of a conditional, so every comma in
-			# it now belongs to that conditional unless escaped. A gated module
-			# cannot also set mod_cond, so there is no nested conditional here
-			# whose commas would need to survive.
 			printf '#{?%s,%s,}' "$_lj_gate" "$(lain_esc_comma "$_lj_unit")"
 		else
 			printf '%s' "$_lj_unit"
-			# Only an ungated segment advances the chain.
 			_lj_prev="$_lj_bg"
 			_lj_first="no"
 		fi
 	done
 
-	# Close a left-hand powerline run back to the bar, using the last segment
-	# that is actually always there. The right-hand side needs no closer: it
-	# already opened against the bar.
 	if [ "$_sep" = "powerline" ] && [ "$_lj_side" = "left" ]; then
 		_lj_last="$(printf '%s' "$_lj_acc" | awk -F"$LAIN_US" '$2 == "" && $1 != "" { b = $1 } END { print b }')"
 		[ -n "$_lj_last" ] || _lj_last="$_bar_bg"
@@ -138,12 +100,6 @@ _lain_join() {
 	printf '#[default]'
 }
 
-# _lain_pl <right|left> <glyph fg> <glyph bg>
-#
-# A solid powerline glyph is invisible when the two segments it divides share a
-# fill, since it is painted in one against the other. That is the case the thin
-# variant exists for: same shape, drawn as a rule in the bar colour, which
-# stays legible against every fill in the palette.
 _lain_pl() {
 	if [ "$2" = "$3" ]; then
 		printf '#[fg=%s,bg=%s,nobold]%s' "$c_bg_bar" "$3" "$(lain_glyph "sep_$1_thin")"

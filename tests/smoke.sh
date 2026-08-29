@@ -1,8 +1,6 @@
 #!/usr/bin/env sh
-# Load the plugin into a headless tmux and assert it actually applied.
-#
-# Runs on its own socket with an empty config, so it can neither read the
-# user's tmux.conf nor touch a running session.
+# Headless load: options apply, formats expand, version gate holds.
+
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -13,11 +11,7 @@ t() { tmux -L "$SOCKET" "$@"; }
 SHIMDIR="${TMPDIR:-/tmp}/lain-shim-$$"
 cleanup() {
 	t kill-server 2>/dev/null || true
-	# kill-server leaves the socket file behind; a test that litters the
-	# user's socket directory once per run is its own kind of bug.
 	rm -f "/tmp/tmux-$(id -u)/$SOCKET"
-	# In the trap rather than inline: an assertion that exits early would
-	# otherwise leave the shim behind, which is how one got left before.
 	rm -rf "$SHIMDIR"
 }
 trap cleanup EXIT INT TERM
@@ -45,10 +39,6 @@ for opt in status-style status-left status-right \
 	assert_set "$opt"
 done
 
-# A conditional tmux cannot parse survives expansion as a literal `#{...}`,
-# which is the failure a mis-escaped comma produces. `#[...]` style directives
-# are expected to survive - they are consumed at draw time, not here - so only
-# a residual `#{` is a fault.
 echo
 echo "-- formats expand"
 expands() {
@@ -65,9 +55,6 @@ for opt in status-left status-right window-status-format window-status-current-f
 	expands "$opt"
 done
 
-# The layer index nests `#{e|<:...}` inside a `#{?...}`, so its comma belongs to
-# the inner brace. Worth its own case: it is the one format where the parser
-# has to get nesting right.
 echo
 echo "-- @lain_window_index layer"
 t set -g @lain_window_index layer
@@ -76,15 +63,8 @@ expands window-status-format
 expands window-status-current-format
 t set -g @lain_window_index plain
 
-# Each option gets its own pass, because a default-only run exercises exactly
-# one branch of every conditional in status.sh and window.sh.
 echo
 echo "-- non-default option paths"
-# try_opts <label> <probe-option> <name=value>...
-#
-# Sets the options, reapplies, then reports the expansion of the one option the
-# change is supposed to affect - a case that reported status-left every time
-# would pass whether or not the setting did anything.
 try_opts() {
 	label="$1"
 	probe="$2"
@@ -119,8 +99,6 @@ try_opts "status top" status-position "@lain_status_position=top"
 try_opts "custom clock" status-right "@lain_clock_format=%H:%M:%S"
 try_opts "pane border on" pane-border-status "@lain_pane_border_status=top"
 
-# lain_flush removes its generated conf unless @lain_debug is on. A leak here
-# would litter TMPDIR once per session start.
 echo
 echo "-- no temp files left behind"
 leaked="$(find "${TMPDIR:-/tmp}" -maxdepth 1 -name 'lain-tmux.*.conf' 2>/dev/null | wc -l)"
@@ -131,31 +109,32 @@ else
 	fail=1
 fi
 
-# The 3.4 floor is a promise the README makes, so it gets tested rather than
-# assumed. Shimming `tmux -V` covers the gate's logic on any machine; CI
-# additionally builds a real 3.3a and checks the plugin refuses it.
 echo
 echo "-- version gate"
 shimdir="$SHIMDIR"
 mkdir -p "$shimdir"
 realtmux="$(command -v tmux)"
 cat >"$shimdir/tmux" <<SHIM
-#!/usr/bin/env sh
 if [ "\$1" = "-V" ]; then printf 'tmux %s\n' "\$LAIN_FAKE_VERSION"; exit 0; fi
 exec "$realtmux" "\$@"
 SHIM
 chmod +x "$shimdir/tmux"
 
+t run-shell "env | grep '^TMUX=' > $SHIMDIR/env"
+TMUX="$(cut -d= -f2- "$SHIMDIR/env")"
+[ -n "$TMUX" ] || {
+	echo "FAIL  could not resolve the test socket; refusing to run core.sh"
+	exit 1
+}
+export TMUX
+
 gate() {
-	# The call has to sit in an `if`, or `set -e` aborts the script on the
-	# refusals - which are exactly the cases worth testing.
 	if LAIN_FAKE_VERSION="$1" PATH="$shimdir:$PATH" \
 		"$PLUGIN_DIR/src/core.sh" "$PLUGIN_DIR" >/dev/null 2>&1; then
 		got=0
 	else
 		got=$?
 	fi
-	# 0 means loaded, non-zero means refused.
 	if [ "$got" -eq 0 ] && [ "$2" = "accept" ]; then
 		printf 'ok    %-32s accepted\n' "$1"
 	elif [ "$got" -ne 0 ] && [ "$2" = "refuse" ]; then
@@ -173,8 +152,6 @@ gate "next-3.6" accept
 gate "3.3a" refuse
 gate "3.0" refuse
 gate "2.9a" refuse
-# A build with no parseable version is newer than the floor by definition;
-# refusing it would be the wrong failure.
 gate "master" accept
 
 if [ "$fail" -ne 0 ]; then

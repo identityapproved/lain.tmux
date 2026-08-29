@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-# Bootstrap. Gate the tmux version, load the layers, apply once.
+# Bootstrap: gate the tmux version, load the layers, apply once.
+
 set -eu
 
 LAIN_DIR="${1:-}"
@@ -8,10 +9,6 @@ if [ -z "$LAIN_DIR" ] || [ ! -d "$LAIN_DIR" ]; then
 	exit 1
 fi
 
-# 3.4 is the floor. Below it the menu, popup and copy-mode style options this
-# theme sets do not all exist, and half-applying would leave a session with
-# tmux's defaults showing through in exactly the places a theme is meant to
-# cover. Fail loudly instead.
 lain_require_tmux() {
 	_rt_v="$(tmux -V 2>/dev/null)"
 	_rt_v="${_rt_v#tmux }"
@@ -19,9 +16,6 @@ lain_require_tmux() {
 	_rt_major="${_rt_v%%.*}"
 	_rt_rest="${_rt_v#*.}"
 
-	# Minor is everything up to the first non-digit, so "3.5a" gives 5. Parsed
-	# by hand rather than with awk: this runs on every load, and a process to
-	# split two numbers is a process too many.
 	_rt_minor=""
 	while [ -n "$_rt_rest" ]; do
 		case "$_rt_rest" in
@@ -33,8 +27,6 @@ lain_require_tmux() {
 		esac
 	done
 
-	# An unparseable version is a development build, which is newer than the
-	# floor by definition. Blocking on it would be the wrong failure.
 	case "$_rt_major" in
 	'' | *[!0-9]*) return 0 ;;
 	esac
@@ -84,6 +76,4 @@ lain_daemon_start
 
 lain_flush
 
-# After the flush, so the daemon finds @lain_daemon_id and its plan already
-# set. Launching before would race the options it reads on its first tick.
 lain_daemon_launch

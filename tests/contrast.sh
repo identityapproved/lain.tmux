@@ -1,11 +1,6 @@
 #!/usr/bin/env sh
-# WCAG contrast check over every foreground/background pair the theme renders.
-#
-# The lain ramps are low contrast by design - that is the look - so this is the
-# guard that keeps faithfulness from crossing into unreadable. Pure awk, no
-# dependencies, exits non-zero on any failure.
-#
-# Floors: 4.5:1 for text, 3.0:1 for non-text UI (borders, indicators).
+# WCAG contrast over every pair the theme renders.
+
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -17,12 +12,9 @@ lain_palette_init
 
 fail=0
 
-# check <label> <fg> <bg> <floor>
 check() {
 	ratio="$(
 		awk -v fg="$2" -v bg="$3" '
-		# strtonum() is a gawk extension; mawk and the macOS awk lack it,
-		# so parse the hex pair by hand and stay portable.
 		function hexval(d,   p) {
 			p = index("0123456789abcdef", tolower(d))
 			return p - 1
@@ -71,15 +63,10 @@ check "flag on fill" "$c_flag_on_fill" "$c_bg_active" 4.5
 check "alert text" "$c_alert_fg" "$c_alert" 4.5
 check "prefix active" "$c_fg_on_active" "$c_accent" 4.5
 
-# Module fills. Each module that paints a background is a fg/bg pair of its
-# own, and they have to stay distinct from each other as well as legible - two
-# adjacent segments sharing a fill make a powerline separator invisible.
 check "node fill" "$c_fg_on_active" "$c_fg_primary" 4.5
 check "path fill" "$c_fg_on_active" "$c_fg_dim" 4.5
 
 echo "-- non-text UI, 3.0:1 floor"
-# The thin powerline separator is drawn in the bar colour against whichever
-# fill it divides, so it has to read against every fill the modules use.
 check "thin sep on ochre" "$c_bg_bar" "$c_bg_active" 3.0
 check "thin sep on rose" "$c_bg_bar" "$c_fg_primary" 3.0
 check "thin sep on dim" "$c_bg_bar" "$c_fg_dim" 3.0

@@ -1,22 +1,12 @@
 #!/usr/bin/env sh
-# Startup cost.
-#
-# The bar forks nothing per redraw, which is the design's headline claim. The
-# matching risk is that startup quietly becomes expensive instead, since it runs
-# on every session create and every reload. This guards that.
-#
-# Two assertions. Wall time is what a user feels, but it varies by an order of
-# magnitude across machines, so its threshold is loose and exists only to catch
-# a collapse. The process count is the real invariant: it does not move with the
-# hardware, and every regression so far has shown up there first.
+# Startup cost: wall time, and the process count that does not vary.
+
 set -eu
 
 cd "$(dirname "$0")/.."
 PLUGIN_DIR="$(pwd)"
 SOCKET="lain-bench-$$"
 RUNS=10
-# Wall time is hardware-dependent, so CI runners get to loosen it. The process
-# ceiling is not overridable: that number should be the same everywhere.
 MAX_MS="${LAIN_BENCH_MAX_MS:-250}"
 MAX_EXECS=20
 
@@ -31,8 +21,6 @@ trap cleanup EXIT INT TERM
 fail=0
 t -f /dev/null new-session -d -x 120 -y 30
 
-# One warm run first: the first load pays for page cache and tmux's own lazy
-# setup, which is not what is being measured.
 t run-shell "$PLUGIN_DIR/lain.tmux"
 
 echo "-- wall time over $RUNS loads"
@@ -55,8 +43,6 @@ fi
 echo
 echo "-- processes per load"
 if command -v strace >/dev/null 2>&1; then
-	# run-shell hands the child a $TMUX pointing at this socket, so borrowing it
-	# lets core.sh be traced directly instead of inside the tmux server.
 	envfile="${TMPDIR:-/tmp}/lain-bench-$$.env"
 	trace="${TMPDIR:-/tmp}/lain-bench-$$.trace"
 	t run-shell "env | grep '^TMUX=' > $envfile"

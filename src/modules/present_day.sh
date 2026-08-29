@@ -1,9 +1,6 @@
 #!/usr/bin/env sh
 # Date and clock.
-#
-# status-left and status-right are passed through strftime, so the formats go
-# in verbatim and no subprocess is involved. Date is dim and clock is chrome
-# rose: of the two, the clock is the one being read at a glance.
+
 lain_mod_present_day() {
 	mod_icon="clock"
 	if lain_is_on @lain_show_date; then

@@ -1,8 +1,6 @@
 #!/usr/bin/env sh
-# Battery charge.
-#
-# Opts out on a machine with no battery, which is what makes it safe to leave
-# in a shared config: the segment is simply absent on the desktop.
+# Battery charge. Absent where there is no battery.
+
 lain_mod_coolant() {
 	mod_icon="battery"
 	mod_dynamic="coolant"

@@ -1,11 +1,6 @@
 #!/usr/bin/env sh
-# Static checks: shellcheck plus shfmt over the whole plugin.
-#
-# Only the entry points are passed to shellcheck. The files under src/ are
-# fragments that assume the palette and option helpers are already sourced;
-# checked standalone every colour token reads as undefined. `external-sources`
-# plus the `# shellcheck source=` directives in core.sh let it follow the real
-# graph instead.
+# Static checks: shellcheck, shfmt, sh -n.
+
 set -eu
 
 cd "$(dirname "$0")/.."
@@ -23,9 +18,6 @@ if command -v shellcheck >/dev/null 2>&1; then
 	else
 		fail=1
 	fi
-	# Modules are fragments that run inside the registry's variable scope by
-	# contract: they read c_* tokens and write mod_* fields, neither of which
-	# they assign themselves. SC2154 is that contract, not a bug.
 	if shellcheck -e SC2154 src/modules/*.sh; then
 		echo "ok    shellcheck (modules)"
 	else
@@ -35,7 +27,6 @@ else
 	echo "skip  shellcheck not installed"
 fi
 
-# Every fragment still has to parse on its own as POSIX sh.
 for f in src/*.sh src/modules/*.sh src/daemon/*.sh palettes/*.sh tests/*.sh docs/*.sh; do
 	if sh -n "$f"; then
 		printf 'ok    sh -n %s\n' "$f"

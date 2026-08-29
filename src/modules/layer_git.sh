@@ -1,10 +1,6 @@
 #!/usr/bin/env sh
-# Branch of the repository the active pane is in.
-#
-# Follows the active pane rather than each pane separately: the cache is one
-# global option, so per-pane state is not something this design can express.
-# For a status bar that is the right trade - the branch you care about is the
-# one in front of you.
+# Branch of the active pane's repository.
+
 lain_mod_layer_git() {
 	mod_icon="branch"
 	mod_deps="git"

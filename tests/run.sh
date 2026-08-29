@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
-# Everything, ordered so a failure is cheapest to diagnose: static checks
-# first, then the ones that reason about colour, then the ones that need a real
-# tmux server, then the slow ones.
+# Every check, cheapest failure first.
+
 set -eu
 cd "$(dirname "$0")"
 ./lint.sh
