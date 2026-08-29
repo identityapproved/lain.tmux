@@ -12,7 +12,8 @@ cd "$(dirname "$0")/.."
 fail=0
 
 if command -v shellcheck >/dev/null 2>&1; then
-	if shellcheck src/core.sh src/daemon/poll.sh tests/contrast.sh tests/smoke.sh tests/lint.sh tests/daemon.sh; then
+	if shellcheck src/core.sh src/daemon/poll.sh tests/contrast.sh tests/smoke.sh \
+		tests/lint.sh tests/daemon.sh tests/snapshot.sh tests/bench.sh; then
 		echo "ok    shellcheck (sh)"
 	else
 		fail=1

@@ -1,6 +1,7 @@
 #!/usr/bin/env sh
-# Everything, in the order a failure is cheapest to diagnose: static checks,
-# then colour maths, then a real tmux server.
+# Everything, ordered so a failure is cheapest to diagnose: static checks
+# first, then the ones that reason about colour, then the ones that need a real
+# tmux server, then the slow ones.
 set -eu
 cd "$(dirname "$0")"
 ./lint.sh
@@ -14,3 +15,7 @@ echo
 ./daemon.sh
 echo
 ./smoke.sh
+echo
+./snapshot.sh
+echo
+./bench.sh

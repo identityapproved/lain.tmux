@@ -216,6 +216,12 @@ The daemon escapes `#` in whatever a poller prints, since a value containing
 `#{@lain_cache_x}` and never `#{E:...}`, so a branch named `#{session_name}`
 stays text instead of being evaluated.
 
+## Troubleshooting
+
+See [docs/troubleshooting.md](docs/troubleshooting.md) - washed-out colors,
+missing glyphs, a module that never appears, and what to include when
+reporting something else.
+
 ## Tests
 
 ```sh

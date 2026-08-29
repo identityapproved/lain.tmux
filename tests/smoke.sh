@@ -10,11 +10,15 @@ PLUGIN_DIR="$(pwd)"
 SOCKET="lain-smoke-$$"
 
 t() { tmux -L "$SOCKET" "$@"; }
+SHIMDIR="${TMPDIR:-/tmp}/lain-shim-$$"
 cleanup() {
 	t kill-server 2>/dev/null || true
 	# kill-server leaves the socket file behind; a test that litters the
 	# user's socket directory once per run is its own kind of bug.
 	rm -f "/tmp/tmux-$(id -u)/$SOCKET"
+	# In the trap rather than inline: an assertion that exits early would
+	# otherwise leave the shim behind, which is how one got left before.
+	rm -rf "$SHIMDIR"
 }
 trap cleanup EXIT INT TERM
 
@@ -126,6 +130,52 @@ else
 	printf 'FAIL  %s conf file(s) left in TMPDIR\n' "$leaked"
 	fail=1
 fi
+
+# The 3.4 floor is a promise the README makes, so it gets tested rather than
+# assumed. Shimming `tmux -V` covers the gate's logic on any machine; CI
+# additionally builds a real 3.3a and checks the plugin refuses it.
+echo
+echo "-- version gate"
+shimdir="$SHIMDIR"
+mkdir -p "$shimdir"
+realtmux="$(command -v tmux)"
+cat >"$shimdir/tmux" <<SHIM
+#!/usr/bin/env sh
+if [ "\$1" = "-V" ]; then printf 'tmux %s\n' "\$LAIN_FAKE_VERSION"; exit 0; fi
+exec "$realtmux" "\$@"
+SHIM
+chmod +x "$shimdir/tmux"
+
+gate() {
+	# The call has to sit in an `if`, or `set -e` aborts the script on the
+	# refusals - which are exactly the cases worth testing.
+	if LAIN_FAKE_VERSION="$1" PATH="$shimdir:$PATH" \
+		"$PLUGIN_DIR/src/core.sh" "$PLUGIN_DIR" >/dev/null 2>&1; then
+		got=0
+	else
+		got=$?
+	fi
+	# 0 means loaded, non-zero means refused.
+	if [ "$got" -eq 0 ] && [ "$2" = "accept" ]; then
+		printf 'ok    %-32s accepted\n' "$1"
+	elif [ "$got" -ne 0 ] && [ "$2" = "refuse" ]; then
+		printf 'ok    %-32s refused\n' "$1"
+	else
+		printf 'FAIL  %s: wanted %s, exit was %s\n' "$1" "$2" "$got"
+		fail=1
+	fi
+}
+
+gate "3.5a" accept
+gate "3.4" accept
+gate "4.0" accept
+gate "next-3.6" accept
+gate "3.3a" refuse
+gate "3.0" refuse
+gate "2.9a" refuse
+# A build with no parseable version is newer than the floor by definition;
+# refusing it would be the wrong failure.
+gate "master" accept
 
 if [ "$fail" -ne 0 ]; then
 	echo

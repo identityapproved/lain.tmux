@@ -1,0 +1,109 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # The whole suite against every supported tmux, built from source because the
+  # distro packages lag and the point is to test the floor we claim.
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tmux: ["3.4", "3.5a"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build and lint tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential bison pkg-config libevent-dev libncurses-dev \
+            shellcheck strace
+          curl -fsSL -o /tmp/shfmt \
+            https://github.com/mvdan/sh/releases/download/v3.8.0/shfmt_v3.8.0_linux_amd64
+          sudo install -m 0755 /tmp/shfmt /usr/local/bin/shfmt
+
+      - name: Build tmux ${{ matrix.tmux }}
+        run: |
+          curl -fsSL -o /tmp/tmux.tar.gz \
+            "https://github.com/tmux/tmux/releases/download/${{ matrix.tmux }}/tmux-${{ matrix.tmux }}.tar.gz"
+          tar -xzf /tmp/tmux.tar.gz -C /tmp
+          cd "/tmp/tmux-${{ matrix.tmux }}"
+          ./configure --prefix=/usr/local
+          make -j"$(nproc)"
+          sudo make install
+          tmux -V
+
+      - name: Static checks
+        run: tests/lint.sh
+
+      - name: Docs match the defaults table
+        run: docs/gen-options.sh --check
+
+      - name: Palette conformance
+        run: tests/palette.sh
+
+      - name: Contrast
+        run: tests/contrast.sh
+
+      - name: Daemon
+        run: tests/daemon.sh
+
+      - name: Smoke
+        run: tests/smoke.sh
+
+      # Snapshots pin exact escape sequences, and tmux changes how it draws
+      # between releases. Running them on every version in the matrix would
+      # mean maintaining one set of golden files per version, which is upkeep
+      # without much extra signal - the other suites already cover behaviour
+      # across versions. So they run against the reference version only.
+      - name: Snapshots
+        if: matrix.tmux == '3.5a'
+        run: tests/snapshot.sh
+
+      # Shared runners are noisy neighbours, so the wall-time ceiling is
+      # loosened here. The process-count assertion inside is not, and that is
+      # the one that actually catches a regression.
+      - name: Startup benchmark
+        if: matrix.tmux == '3.5a'
+        env:
+          LAIN_BENCH_MAX_MS: "600"
+        run: tests/bench.sh
+
+  # The floor is a promise, so it gets a test: below 3.4 the plugin must refuse
+  # to load rather than half-apply and leave tmux defaults showing through.
+  version-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential bison pkg-config libevent-dev libncurses-dev
+
+      - name: Build tmux 3.3a
+        run: |
+          curl -fsSL -o /tmp/tmux.tar.gz \
+            https://github.com/tmux/tmux/releases/download/3.3a/tmux-3.3a.tar.gz
+          tar -xzf /tmp/tmux.tar.gz -C /tmp
+          cd /tmp/tmux-3.3a
+          ./configure --prefix=/usr/local
+          make -j"$(nproc)"
+          sudo make install
+          tmux -V
+
+      - name: Plugin refuses to load
+        run: |
+          tmux -L floor -f /dev/null new-session -d -x 100 -y 20
+          if src/core.sh "$PWD"; then
+            echo "core.sh loaded on tmux 3.3a; it should have refused"
+            exit 1
+          fi
+          echo "refused, as expected"
+          tmux -L floor kill-server
