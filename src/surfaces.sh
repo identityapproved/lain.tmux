@@ -10,7 +10,8 @@ lain_surfaces_apply() {
 	# ring role, inactive drops to a neutral grey so the two never compete.
 	lain_set pane-border-style "fg=${c_border}"
 	lain_set pane-active-border-style "fg=${c_border_active}"
-	lain_set pane-border-status "$(lain_get @lain_pane_border_status)"
+	lain_getv @lain_pane_border_status _pbs
+	lain_set pane-border-status "$_pbs"
 	lain_set pane-border-format " #P #{pane_current_command} "
 	lain_set display-panes-colour "$c_fg_dim"
 	lain_set display-panes-active-colour "$c_border_active"

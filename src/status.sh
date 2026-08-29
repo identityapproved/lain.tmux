@@ -10,7 +10,7 @@
 # arguments on unescaped commas first.
 
 lain_status_apply() {
-	_sep="$(lain_get @lain_separator)"
+	lain_getv @lain_separator _sep
 	case "$_sep" in
 	square | powerline) _filled="yes" ;;
 	*) _filled="no" ;;
@@ -23,15 +23,22 @@ lain_status_apply() {
 	fi
 
 	lain_set status "on"
-	lain_set status-position "$(lain_get @lain_status_position)"
-	lain_set status-interval "$(lain_get @lain_status_interval)"
-	lain_set status-justify "$(lain_get @lain_status_justify)"
-	lain_set status-left-length "$(lain_get @lain_status_left_length)"
-	lain_set status-right-length "$(lain_get @lain_status_right_length)"
+	lain_getv @lain_status_position _sp
+	lain_getv @lain_status_interval _si
+	lain_getv @lain_status_justify _sj
+	lain_getv @lain_status_left_length _sll
+	lain_getv @lain_status_right_length _srl
+	lain_set status-position "$_sp"
+	lain_set status-interval "$_si"
+	lain_set status-justify "$_sj"
+	lain_set status-left-length "$_sll"
+	lain_set status-right-length "$_srl"
 	lain_set status-style "bg=${_bar_bg},fg=${c_fg_primary}"
 
-	lain_set status-left "$(_lain_side left "$(lain_get @lain_modules_left)")"
-	lain_set status-right "$(_lain_side right "$(lain_get @lain_modules_right)")"
+	lain_getv @lain_modules_left _ml
+	lain_getv @lain_modules_right _mr
+	lain_set status-left "$(_lain_side left "$_ml")"
+	lain_set status-right "$(_lain_side right "$_mr")"
 }
 
 # _lain_side <left|right> <module list>
@@ -108,9 +115,10 @@ _lain_join() {
 
 		if [ -n "$_lj_gate" ]; then
 			# The unit becomes one branch of a conditional, so every comma in
-			# it now belongs to that conditional unless escaped.
-			printf '#{?%s,%s,}' "$_lj_gate" \
-				"$(printf '%s' "$_lj_unit" | sed 's/,/#,/g; s/###,/#,/g')"
+			# it now belongs to that conditional unless escaped. A gated module
+			# cannot also set mod_cond, so there is no nested conditional here
+			# whose commas would need to survive.
+			printf '#{?%s,%s,}' "$_lj_gate" "$(lain_esc_comma "$_lj_unit")"
 		else
 			printf '%s' "$_lj_unit"
 			# Only an ungated segment advances the chain.

@@ -13,19 +13,41 @@ fi
 # tmux's defaults showing through in exactly the places a theme is meant to
 # cover. Fail loudly instead.
 lain_require_tmux() {
-	if ! tmux -V 2>/dev/null | awk '
-		{ gsub(/^tmux |^next-/, ""); split($0, v, "."); }
-		{ exit !(v[1] + 0 > 3 || (v[1] + 0 == 3 && v[2] + 0 >= 4)) }
-	'; then
-		tmux display-message "lain.tmux: needs tmux 3.4 or newer (found $(tmux -V))"
-		return 1
-	fi
-	return 0
-}
+	_rt_v="$(tmux -V 2>/dev/null)"
+	_rt_v="${_rt_v#tmux }"
+	_rt_v="${_rt_v#next-}"
+	_rt_major="${_rt_v%%.*}"
+	_rt_rest="${_rt_v#*.}"
 
-# Field delimiter for the segment accumulator in status.sh. US (0x1f) because
-# it is not IFS whitespace, so an empty leading field survives `read`.
-LAIN_US="$(printf '\037')"
+	# Minor is everything up to the first non-digit, so "3.5a" gives 5. Parsed
+	# by hand rather than with awk: this runs on every load, and a process to
+	# split two numbers is a process too many.
+	_rt_minor=""
+	while [ -n "$_rt_rest" ]; do
+		case "$_rt_rest" in
+		[0-9]*)
+			_rt_minor="${_rt_minor}${_rt_rest%"${_rt_rest#?}"}"
+			_rt_rest="${_rt_rest#?}"
+			;;
+		*) break ;;
+		esac
+	done
+
+	# An unparseable version is a development build, which is newer than the
+	# floor by definition. Blocking on it would be the wrong failure.
+	case "$_rt_major" in
+	'' | *[!0-9]*) return 0 ;;
+	esac
+	[ -n "$_rt_minor" ] || _rt_minor=0
+
+	if [ "$_rt_major" -gt 3 ] ||
+		{ [ "$_rt_major" -eq 3 ] && [ "$_rt_minor" -ge 4 ]; }; then
+		return 0
+	fi
+
+	tmux display-message "lain.tmux: needs tmux 3.4 or newer (found $(tmux -V))"
+	return 1
+}
 
 lain_require_tmux || exit 1
 

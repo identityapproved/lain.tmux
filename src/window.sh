@@ -7,7 +7,7 @@
 # weight to be a reliable signal - so each gets a colour and a glyph.
 
 lain_window_apply() {
-	_sep="$(lain_get @lain_separator)"
+	lain_getv @lain_separator _sep
 	_idx="$(_lain_window_index)"
 
 	lain_set window-status-separator ""
@@ -36,7 +36,8 @@ lain_window_apply() {
 # separators: `plain` is the terse `1:name`, while `layer` borrows the show's
 # own numbering and reads better with a space than a second colon.
 _lain_window_index() {
-	case "$(lain_get @lain_window_index)" in
+	lain_getv @lain_window_index _wi
+	case "$_wi" in
 	layer) printf '%s' 'LAYER:#{?#{e|<:#I,10},0,}#I ' ;;
 	*) printf '%s' '#I:' ;;
 	esac

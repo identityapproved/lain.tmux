@@ -9,7 +9,7 @@
 # no width at rest.
 lain_mod_knights() {
 	mod_icon="prefix"
-	mod_text="$(lain_get @lain_prefix_text)"
+	lain_getv @lain_prefix_text mod_text
 	mod_fg="$c_fg_on_active"
 	mod_bg="$c_accent"
 	mod_attr="bold"

@@ -106,7 +106,8 @@ lain_compile() {
 		# Nothing cached yet, or nothing to cache: leave the bar alone. A
 		# battery module on a desktop never comes back, and a permanently
 		# empty coloured block is worse than an absent segment.
-		[ -n "$(tmux show -gqv "@lain_cache_${mod_dynamic}")" ] || return 1
+		lain_getv "@lain_cache_${mod_dynamic}" _lc_cached
+		[ -n "$_lc_cached" ] || return 1
 		# Plain `#{@...}`, never `#{E:@...}`. The cache holds data, not format:
 		# double expansion would evaluate whatever it contains, so a branch
 		# named `#{session_name}` would render as the session name. The daemon
@@ -118,8 +119,8 @@ lain_compile() {
 
 	if [ "$_lc_filled" = "yes" ] && [ -n "$mod_bg" ]; then
 		seg_bg="$mod_bg"
-		_lc_base="fg=${mod_fg}#,bg=${mod_bg}"
-		_lc_alt="fg=${mod_alt_fg:-$mod_fg}#,bg=${mod_alt_bg:-$mod_bg}"
+		_lc_base="fg=${mod_fg},bg=${mod_bg}"
+		_lc_alt="fg=${mod_alt_fg:-$mod_fg},bg=${mod_alt_bg:-$mod_bg}"
 	else
 		seg_bg=""
 		# A flat segment reads as the fill colour, since that is the colour the
@@ -129,17 +130,17 @@ lain_compile() {
 		_lc_alt="fg=${mod_alt_bg:-${mod_alt_fg:-${mod_bg:-$mod_fg}}}"
 	fi
 
-	[ -n "$mod_attr" ] && _lc_base="${_lc_base}#,${mod_attr}"
-	[ -n "$mod_attr" ] && _lc_alt="${_lc_alt}#,${mod_attr}"
+	[ -n "$mod_attr" ] && _lc_base="${_lc_base},${mod_attr}"
+	[ -n "$mod_attr" ] && _lc_alt="${_lc_alt},${mod_attr}"
 
 	seg_gate="$mod_gate"
 
 	if [ -n "$mod_cond" ]; then
-		seg_text="#{?${mod_cond},#[${_lc_alt}],#[${_lc_base}]} ${_lc_body} "
+		# Inside a conditional the style's own commas have to be escaped, or
+		# the conditional splits its arguments on them.
+		seg_text="#{?${mod_cond},#[$(lain_esc_comma "$_lc_alt")],#[$(lain_esc_comma "$_lc_base")]} ${_lc_body} "
 	else
-		# Commas are unescaped here. Gating re-escapes the whole unit, which is
-		# why that has to happen in the joiner, after separators are attached.
-		seg_text="#[$(printf '%s' "$_lc_base" | sed 's/#,/,/g')] ${_lc_body} "
+		seg_text="#[${_lc_base}] ${_lc_body} "
 	fi
 	return 0
 }

@@ -15,7 +15,9 @@
 # polled on the next reload.
 lain_cache_plan() {
 	_cp_want=""
-	for _cp_m in $(lain_get @lain_modules_left) $(lain_get @lain_modules_right); do
+	lain_getv @lain_modules_left _cp_l
+	lain_getv @lain_modules_right _cp_r
+	for _cp_m in $_cp_l $_cp_r; do
 		lain_module_known "$_cp_m" || continue
 		# The module function is called for its declarations only. Its own
 		# opt-out is about whether there is data to show right now, which is
@@ -48,12 +50,12 @@ lain_daemon_start() {
 		return 0
 	fi
 
-	_ds_interval="$(lain_get @lain_poll_interval)"
+	lain_getv @lain_poll_interval _ds_interval
 	lain_set @lain_daemon_modules "$_ds_plan"
 	lain_set @lain_poll_interval "$_ds_interval"
 
 	_ds_now="$(date +%s)"
-	_ds_beat="$(tmux show -gqv @lain_daemon_beat 2>/dev/null)"
+	lain_getv @lain_daemon_beat _ds_beat
 	if [ -n "$_ds_beat" ] &&
 		[ "$((_ds_now - _ds_beat))" -lt "$((_ds_interval * 3))" ]; then
 		return 0

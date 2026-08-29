@@ -7,9 +7,11 @@
 lain_mod_present_day() {
 	mod_icon="clock"
 	if lain_is_on @lain_show_date; then
-		mod_text="#[fg=${c_fg_dim}]$(lain_get @lain_date_format) #[fg=${c_fg_primary}]$(lain_get @lain_clock_format)"
+		lain_getv @lain_date_format _pd_d
+		lain_getv @lain_clock_format _pd_c
+		mod_text="#[fg=${c_fg_dim}]${_pd_d} #[fg=${c_fg_primary}]${_pd_c}"
 	else
-		mod_text="$(lain_get @lain_clock_format)"
+		lain_getv @lain_clock_format mod_text
 	fi
 	mod_fg="$c_fg_primary"
 	mod_bg=""
