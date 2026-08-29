@@ -1,0 +1,11 @@
+shell=sh
+
+# Follow the `. "$LAIN_DIR/src/..."` chain out of core.sh, so the palette and
+# option helpers resolve instead of reporting every colour token as undefined.
+# Each source is pinned with a `# shellcheck source=` directive at its site.
+external-sources=true
+
+# The palette deliberately defines all thirty-six ramp steps even though v0.1
+# renders a dozen. A partial palette is worse than an unused variable: the next
+# module to need high_6 should find it there rather than reach for a hex.
+disable=SC2034
