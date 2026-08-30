@@ -20,13 +20,15 @@ trap cleanup EXIT INT TERM
 fail=0
 
 pollers() {
-	_p_all="$(pgrep -f "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null || true)"
+	_p_all=" $(pgrep -f "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null | tr '\n' ' ')"
 	_p_n=0
 	for _p_pid in $_p_all; do
 		_p_par="$(ps -o ppid= -p "$_p_pid" 2>/dev/null | tr -d ' ')"
-		case " $_p_all " in
-		*" $_p_par "*) continue ;;
-		esac
+		if [ -n "$_p_par" ]; then
+			case "$_p_all" in
+			*" $_p_par "*) continue ;;
+			esac
+		fi
 		_p_n=$((_p_n + 1))
 	done
 	printf '%s' "$_p_n"
