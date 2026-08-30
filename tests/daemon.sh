@@ -18,6 +18,20 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 fail=0
+
+pollers() {
+	_p_all="$(pgrep -f "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null || true)"
+	_p_n=0
+	for _p_pid in $_p_all; do
+		_p_par="$(ps -o ppid= -p "$_p_pid" 2>/dev/null | tr -d ' ')"
+		case " $_p_all " in
+		*" $_p_par "*) continue ;;
+		esac
+		_p_n=$((_p_n + 1))
+	done
+	printf '%s' "$_p_n"
+}
+
 san() {
 	got="$(printf '%s' "$2" | lain_sanitize)"
 	if [ "$got" = "$3" ]; then
@@ -106,17 +120,18 @@ while [ "$i" -lt 3 ]; do
 done
 sleep 1
 id_after="$(t show -gqv @lain_daemon_id)"
-running="$(pgrep -f "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null | wc -l)"
+running="$(pollers)"
 if [ "$id_before" = "$id_after" ] && [ "$running" -eq 1 ]; then
 	printf 'ok    %-28s 1 process across 4 loads\n' "no duplicate daemons"
 else
 	printf 'FAIL  id %s -> %s, %s processes running\n' "$id_before" "$id_after" "$running"
+	pgrep -af "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null || true
 	fail=1
 fi
 
 t kill-server 2>/dev/null || true
 sleep 4
-left="$(pgrep -f "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null | wc -l)"
+left="$(pollers)"
 if [ "$left" -eq 0 ]; then
 	printf 'ok    %-28s\n' "daemon exits with the server"
 else
