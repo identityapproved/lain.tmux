@@ -144,10 +144,10 @@ set -g status-left "#[fg=#{E:@lain_c_accent}] #S #[default]"
 | Token | Hex | Role |
 | --- | --- | --- |
 | `@lain_c_bg_bar` | `#1A1A1A` | status bar background |
-| `@lain_c_bg_active` | `#C1B48E` | active window fill, selection |
+| `@lain_c_bg_active` | `#A49978` | active window fill, selection |
 | `@lain_c_bg_surface` | `#2A2A2A` | popup and second surface |
 | `@lain_c_fg_primary` | `#CE7688` | bar text, chrome |
-| `@lain_c_fg_content` | `#C1B48E` | content and long-form text |
+| `@lain_c_fg_content` | `#A49978` | content and long-form text |
 | `@lain_c_fg_on_active` | `#000000` | text on the ochre fill |
 | `@lain_c_fg_dim` | `#968C6E` | inactive windows, metadata |
 | `@lain_c_accent` | `#FFB1C3` | prefix pending, urgent |

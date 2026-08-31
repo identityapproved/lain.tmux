@@ -3,12 +3,12 @@
 
 lain_palette_init() {
 	c_bg_bar="$lain_back_2"
-	c_bg_active="$lain_high_1"
+	c_bg_active="$lain_high_3"
 	c_bg_surface="$lain_back_3"
 
 	c_fg_primary="$lain_fore_1"
 	c_fg_on_active="$lain_back_1"
-	c_fg_content="$lain_high_1"
+	c_fg_content="$lain_high_3"
 
 	c_fg_dim="$lain_high_4"
 
@@ -21,14 +21,14 @@ lain_palette_init() {
 	c_border="$lain_back_3"
 	c_border_active="$lain_fore_1"
 
-	c_select="$lain_high_1"
+	c_select="$lain_high_3"
 	c_select_fg="$lain_back_1"
 
-	c_flag_zoom="$lain_high_1"
+	c_flag_zoom="$lain_high_3"
 	c_flag_bell="$lain_accent"
 	c_flag_mark="$lain_accent"
 	c_flag_on_fill="$lain_back_1"
-	c_bell_on_fill="$lain_error_bg"
+	c_bell_on_fill="$lain_error_fg"
 }
 
 lain_palette_apply() {
