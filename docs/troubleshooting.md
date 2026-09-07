@@ -95,6 +95,12 @@ tmux show -g | grep @lain_cache
 more than three intervals, the next plugin load starts a fresh daemon; there is
 no PID to clear.
 
+The daemon re-reads its modules on every pass and polls the plan it was handed
+in `@lain_daemon_modules`. Editing `@lain_modules_left` or `@lain_modules_right`
+changes that plan, so the next load hands the job to a fresh daemon and the one
+holding it exits within an interval. Updating the plugin under a running daemon
+is picked up the same way, on the next poll, without restarting the server.
+
 Run the poller by hand to see its error:
 
 ```sh

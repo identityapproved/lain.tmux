@@ -20,6 +20,13 @@ shape=""
 while tmux has-session 2>/dev/null; do
 	[ "$(tmux show -gqv @lain_daemon_id)" = "$MY_ID" ] || exit 0
 
+	# A plugin manager rewrites these files whenever it likes, including in the
+	# seconds after this process started. Re-reading them each pass costs no
+	# forks and means updated module code takes effect on the next tick instead
+	# of at the next server restart.
+	. "$LAIN_DIR/src/registry.sh"
+	lain_modules_load
+
 	now=""
 	for _m in $(tmux show -gqv @lain_daemon_modules); do
 		command -v "lain_poll_$_m" >/dev/null 2>&1 || continue

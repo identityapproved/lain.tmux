@@ -199,6 +199,31 @@ else
 	fail=1
 fi
 
+# A module added to or dropped from the config has to reach the running daemon:
+# it sourced its modules once and polls whatever plan it was handed, so the plan
+# changing under it is the one event that costs it the job.
+t set -g @lain_modules_right "psyche present_day"
+t run-shell "$PLUGIN_DIR/lain.tmux"
+sleep 1
+id_replanned="$(t show -gqv @lain_daemon_id)"
+plan_replanned="$(t show -gqv @lain_daemon_modules)"
+if [ "$id_replanned" != "$id_after" ] && [ "$plan_replanned" = "psyche" ]; then
+	printf 'ok    %-28s %s\n' "plan change relaunches" "$plan_replanned"
+else
+	printf 'FAIL  id %s -> %s, plan [%s]\n' "$id_after" "$id_replanned" "$plan_replanned"
+	fail=1
+fi
+
+sleep 3
+running="$(pollers)"
+if [ "$running" -eq 1 ]; then
+	printf 'ok    %-28s\n' "superseded daemon exits"
+else
+	printf 'FAIL  %s pollers after the handover\n' "$running"
+	pgrep -af "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null || true
+	fail=1
+fi
+
 t kill-server 2>/dev/null || true
 sleep 4
 left="$(pollers)"

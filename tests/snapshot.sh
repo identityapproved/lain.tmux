@@ -86,12 +86,14 @@ snap transparent \
 snap windows \
 	"@lain_separator=square" "@lain_glyphs=ascii" "@lain_window_index=layer"
 
-# A fresh heartbeat and a long interval keep the daemon from starting, so the
-# two polled segments render from the cache values set here and nothing else.
+# A fresh heartbeat, a long interval and the plan already published keep the
+# daemon from starting, so the two polled segments render from the cache values
+# set here and nothing else.
 snap polled \
 	"@lain_separator=square" "@lain_glyphs=unicode" \
 	"@lain_modules_left=layer" "@lain_modules_right=duvet accela present_day" \
 	"@lain_poll_interval=3600" "@lain_daemon_beat=$(date +%s)" \
+	"@lain_daemon_modules=duvet accela" \
 	"@lain_cache_duvet=Boa - Duvet" "@lain_cache_accela=12K/3K"
 
 if [ "$UPDATE" = "--update" ]; then

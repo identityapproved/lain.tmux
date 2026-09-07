@@ -101,10 +101,12 @@ try_opts "pane border on" pane-border-status "@lain_pane_border_status=top"
 
 echo
 echo "-- dynamic modules read the cache"
-# The compile step is what is under test, not the poller, so a fresh heartbeat
-# and a long interval stand in for a daemon the plugin then declines to start.
+# The compile step is what is under test, not the poller, so a fresh heartbeat,
+# a long interval and the plan already published stand in for a daemon the
+# plugin then declines to start.
 t set -g @lain_poll_interval 3600
 t set -g @lain_daemon_beat "$(date +%s)"
+t set -g @lain_daemon_modules "duvet accela"
 t set -g @lain_cache_duvet "Boa - Duvet"
 t set -g @lain_cache_accela "12K/3K"
 t set -g @lain_modules_right "duvet accela present_day"

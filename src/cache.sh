@@ -29,12 +29,18 @@ lain_daemon_start() {
 	fi
 
 	lain_getv @lain_poll_interval _ds_interval
+	lain_getv @lain_daemon_modules _ds_running
 	lain_set @lain_daemon_modules "$_ds_plan"
 	lain_set @lain_poll_interval "$_ds_interval"
 
+	# A live daemon keeps its job. It only loses it when the plan it was handed
+	# no longer matches the one the config now asks for - otherwise a module
+	# added to @lain_modules_* would wait for the server to die. The comparison
+	# is against the published plan, not the new one, so a reload that changes
+	# nothing publishes no id and the daemon is left alone.
 	_ds_now="$(date +%s)"
 	lain_getv @lain_daemon_beat _ds_beat
-	if [ -n "$_ds_beat" ] &&
+	if [ "$_ds_plan" = "$_ds_running" ] && [ -n "$_ds_beat" ] &&
 		[ "$((_ds_now - _ds_beat))" -lt "$((_ds_interval * 3))" ]; then
 		return 0
 	fi
