@@ -100,6 +100,43 @@ try_opts "custom clock" status-right "@lain_clock_format=%H:%M:%S"
 try_opts "pane border on" pane-border-status "@lain_pane_border_status=top"
 
 echo
+echo "-- dynamic modules read the cache"
+# The compile step is what is under test, not the poller, so a fresh heartbeat
+# and a long interval stand in for a daemon the plugin then declines to start.
+t set -g @lain_poll_interval 3600
+t set -g @lain_daemon_beat "$(date +%s)"
+t set -g @lain_cache_duvet "Boa - Duvet"
+t set -g @lain_cache_accela "12K/3K"
+t set -g @lain_modules_right "duvet accela present_day"
+t run-shell "$PLUGIN_DIR/lain.tmux"
+case "$(t show -gv status-right)" in
+*'#{@lain_cache_duvet}'*'#{@lain_cache_accela}'*)
+	printf 'ok    %-32s %s\n' "cached modules compiled in" "$(t display-message -p '#{E:status-right}')"
+	;;
+*)
+	printf 'FAIL  cached modules missing: %s\n' "$(t show -gv status-right)"
+	fail=1
+	;;
+esac
+expands status-right
+
+t set -g @lain_cache_duvet ""
+t run-shell "$PLUGIN_DIR/lain.tmux"
+case "$(t show -gv status-right)" in
+*'#{@lain_cache_duvet}'*)
+	printf 'FAIL  emptied module stayed on the bar\n'
+	fail=1
+	;;
+*) printf 'ok    %-32s\n' "emptied module drops out" ;;
+esac
+
+for opt in @lain_cache_duvet @lain_cache_accela @lain_modules_right \
+	@lain_daemon_beat @lain_poll_interval; do
+	t set -gu "$opt"
+done
+t run-shell "$PLUGIN_DIR/lain.tmux"
+
+echo
 echo "-- no temp files left behind"
 leaked="$(find "${TMPDIR:-/tmp}" -maxdepth 1 -name 'lain-tmux.*.conf' 2>/dev/null | wc -l)"
 if [ "$leaked" -eq 0 ]; then

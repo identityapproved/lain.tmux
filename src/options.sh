@@ -43,7 +43,9 @@ $(
 			$1 ~ /^@lain_/ {
 				k = $1; sub(/^@lain_/, "", k)
 				$1 = ""; sub(/^ /, "")
-				gsub(/^"|"$/, "")
+				q = substr($0, 1, 1)
+				if (length($0) > 1 && (q == "\"" || q == "\047") && substr($0, length($0)) == q)
+					$0 = substr($0, 2, length($0) - 2)
 				print k us $0
 			}'
 	)
