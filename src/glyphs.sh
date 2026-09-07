@@ -11,6 +11,8 @@ lain_glyph() {
 	nerd:cpu) printf '\357\222\274' ;;
 	nerd:battery) printf '\357\211\200' ;;
 	nerd:branch) printf '\356\234\245' ;;
+	nerd:music) printf '\357\200\201' ;;
+	nerd:net) printf '\357\203\254' ;;
 	nerd:sep_right) printf '\356\202\260' ;;
 	nerd:sep_left) printf '\356\202\262' ;;
 	nerd:sep_right_thin) printf '\356\202\261' ;;
@@ -25,6 +27,8 @@ lain_glyph() {
 	unicode:cpu) printf '\342\226\244' ;;
 	unicode:battery) printf '\342\226\256' ;;
 	unicode:branch) printf '\342\221\202' ;;
+	unicode:music) printf '\342\231\252' ;;
+	unicode:net) printf '\342\207\205' ;;
 	unicode:sep_right) printf '\342\226\266' ;;
 	unicode:sep_left) printf '\342\227\200' ;;
 	unicode:sep_right_thin) printf '\342\224\202' ;;

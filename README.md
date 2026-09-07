@@ -58,6 +58,8 @@ set -g @lain_modules_right "wired_path node present_day"
 | `psyche` | one-minute load average | Polled. |
 | `coolant` | battery charge | Polled. Absent on a machine with no battery. |
 | `layer_git` | branch of the active pane's repo | Polled. Needs `git`. |
+| `duvet` | now playing | Polled. Needs `playerctl`, or `nowplaying-cli` on macOS. |
+| `accela` | network throughput | Polled. Down over up, sampled across one second. Linux only. |
 
 An unknown name in either list is skipped rather than breaking the bar, and a
 module whose dependency is missing removes itself.

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Module registry: modules describe a segment, this compiles it.
 
-LAIN_MODULES="layer knights node wired_path present_day psyche coolant layer_git"
+LAIN_MODULES="layer knights node wired_path present_day psyche coolant layer_git duvet accela"
 
 lain_modules_load() {
 	for _lm_m in $LAIN_MODULES; do

@@ -55,6 +55,60 @@ san "long value truncated" \
 	"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd"
 
 echo
+echo "-- pollers with no tmux involved"
+# shellcheck source=src/modules/accela.sh
+. ./src/modules/accela.sh
+# shellcheck source=src/modules/duvet.sh
+. ./src/modules/duvet.sh
+
+eq() {
+	if [ "$2" = "$3" ]; then
+		printf 'ok    %-28s %s\n' "$1" "$2"
+	else
+		printf 'FAIL  %-28s got [%s] want [%s]\n' "$1" "$2" "$3"
+		fail=1
+	fi
+}
+
+eq "rate idle" "$(_lain_accela_rate 0)" "0B"
+eq "rate counter reset" "$(_lain_accela_rate -8000)" "0B"
+eq "rate bytes" "$(_lain_accela_rate 999)" "999B"
+eq "rate kilobytes" "$(_lain_accela_rate 2048)" "2K"
+eq "rate megabytes" "$(_lain_accela_rate 3145728)" "3M"
+
+eq "track artist and title" "$(_lain_duvet_trim 'Boa - Duvet')" "Boa - Duvet"
+eq "track without artist" "$(_lain_duvet_trim ' - Duvet')" "Duvet"
+eq "track without title" "$(_lain_duvet_trim 'Boa - ')" "Boa"
+eq "track with neither" "$(_lain_duvet_trim ' - ')" ""
+
+if [ -r /proc/net/dev ]; then
+	speed="$(lain_poll_accela)"
+	case "$speed" in
+	*[0-9][BKM]/*[0-9][BKM])
+		printf 'ok    %-28s %s\n' "throughput sampled" "$speed"
+		;;
+	*)
+		printf 'FAIL  %-28s got [%s]\n' "throughput sampled" "$speed"
+		fail=1
+		;;
+	esac
+else
+	printf 'skip  %-28s no /proc/net/dev\n' "throughput sampled"
+fi
+
+# Whatever the platform answers, a poller returns one line or nothing - the
+# daemon writes the result straight into a tmux option.
+track="$(lain_poll_duvet || true)"
+case "$track" in
+*"
+"*)
+	printf 'FAIL  %-28s got [%s]\n' "track is one line" "$track"
+	fail=1
+	;;
+*) printf 'ok    %-28s [%s]\n' "track is one line" "$track" ;;
+esac
+
+echo
 echo "-- daemon lifecycle"
 t -f /dev/null new-session -d -x 120 -y 30 -c "$PLUGIN_DIR"
 t set -g @lain_modules_right "psyche present_day"
