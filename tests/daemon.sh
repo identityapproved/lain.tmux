@@ -81,6 +81,20 @@ eq "track without artist" "$(_lain_duvet_trim ' - Duvet')" "Duvet"
 eq "track without title" "$(_lain_duvet_trim 'Boa - ')" "Boa"
 eq "track with neither" "$(_lain_duvet_trim ' - ')" ""
 
+# Two players registered, one of them idle: playerctl's default player is as
+# likely to be the browser as the music daemon, so the pick has to look at all
+# of them.
+pick() { eq "$1" "$(_lain_duvet_pick "$2")" "$3"; }
+
+pick "one player playing" "Playing|Boa - Duvet" "Boa - Duvet"
+pick "playing beats paused" "Paused|Nobody - Elsewhere
+Playing|Boa - Duvet" "Boa - Duvet"
+pick "paused when none play" "Paused|Boa - Duvet
+Paused|Nobody - Elsewhere" "Boa - Duvet"
+pick "stopped ignored" "Stopped|Boa - Duvet" ""
+pick "empty metadata skipped" "Playing| - 
+Playing|Boa - Duvet" "Boa - Duvet"
+
 if [ -r /proc/net/dev ]; then
 	speed="$(lain_poll_accela)"
 	case "$speed" in
