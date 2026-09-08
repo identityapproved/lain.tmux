@@ -101,6 +101,12 @@ changes that plan, so the next load hands the job to a fresh daemon and the one
 holding it exits within an interval. Updating the plugin under a running daemon
 is picked up the same way, on the next poll, without restarting the server.
 
+A published `@lain_daemon_id` with no `@lain_daemon_beat` beside it means the
+daemon was launched and died before its first pass. It is not a session that
+keeps it alive - tmux sources its config before the first session exists, and
+`set -s exit-empty off` keeps a server running without one - so the daemon
+leaves when the id stops being its own, and nothing else.
+
 Run the poller by hand to see its error:
 
 ```sh

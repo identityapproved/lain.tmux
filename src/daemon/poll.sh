@@ -17,8 +17,14 @@ lain_modules_load
 
 shape=""
 
-while tmux has-session 2>/dev/null; do
-	[ "$(tmux show -gqv @lain_daemon_id)" = "$MY_ID" ] || exit 0
+# A session is not what says the server is alive. tmux sources its config
+# before the first one exists, and with exit-empty off the server outlives them
+# all, so gating on has-session ends the daemon at boot on exactly the setups
+# that keep a server running without a session. The published id is the real
+# liveness test: show fails on a dead server, which reads as a mismatch and
+# ends the loop the same way being superseded does.
+while :; do
+	[ "$(tmux show -gqv @lain_daemon_id 2>/dev/null)" = "$MY_ID" ] || exit 0
 
 	# A plugin manager rewrites these files whenever it likes, including in the
 	# seconds after this process started. Re-reading them each pass costs no

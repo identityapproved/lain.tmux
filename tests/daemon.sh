@@ -6,14 +6,18 @@ set -eu
 cd "$(dirname "$0")/.."
 PLUGIN_DIR="$(pwd)"
 SOCKET="lain-daemon-$$"
+SOCKET2="lain-bootless-$$"
+BOOT_CONF="${TMPDIR:-/tmp}/lain-bootless.$$.conf"
 
 # shellcheck source=src/cache.sh
 . ./src/cache.sh
 
 t() { tmux -L "$SOCKET" "$@"; }
+u() { tmux -L "$SOCKET2" "$@"; }
 cleanup() {
 	t kill-server 2>/dev/null || true
-	rm -f "/tmp/tmux-$(id -u)/$SOCKET"
+	u kill-server 2>/dev/null || true
+	rm -f "/tmp/tmux-$(id -u)/$SOCKET" "/tmp/tmux-$(id -u)/$SOCKET2" "$BOOT_CONF"
 }
 trap cleanup EXIT INT TERM
 
@@ -233,6 +237,32 @@ else
 	printf 'FAIL  %s daemon(s) survived kill-server\n' "$left"
 	fail=1
 fi
+
+echo
+echo "-- a server with no session"
+# tmux sources its config before the first session exists, and exit-empty off
+# keeps the server alive without one. A poller that waits for a session ends at
+# boot on exactly those servers, leaving a plan published and nothing polling
+# it until someone reloads by hand.
+cat >"$BOOT_CONF" <<CONF
+set -s exit-empty off
+set -g @lain_poll_interval 2
+set -g @lain_modules_right "psyche present_day"
+run-shell "$PLUGIN_DIR/lain.tmux"
+CONF
+u -f "$BOOT_CONF" start-server
+sleep 3
+
+sessions="$(u list-sessions 2>/dev/null || true)"
+beat="$(u show -gqv @lain_daemon_beat)"
+if [ -z "$sessions" ] && [ -n "$beat" ]; then
+	printf 'ok    %-28s %s\n' "polls with no session" "$(u show -gqv @lain_cache_psyche)"
+else
+	printf 'FAIL  sessions [%s], beat [%s]\n' "$sessions" "$beat"
+	fail=1
+fi
+
+u kill-server 2>/dev/null || true
 
 [ "$fail" -eq 0 ] || {
 	echo
