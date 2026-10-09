@@ -97,6 +97,7 @@ try_opts "path module" status-right "@lain_modules_right=wired_path present_day"
 try_opts "show_date off" status-right "@lain_show_date=off"
 try_opts "status top" status-position "@lain_status_position=top"
 try_opts "custom clock" status-right "@lain_clock_format=%H:%M:%S"
+try_opts "right extra" status-right "@lain_status_right_extra= #[default]EXTRA"
 try_opts "pane border on" pane-border-status "@lain_pane_border_status=top"
 
 echo

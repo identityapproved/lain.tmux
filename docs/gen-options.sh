@@ -27,6 +27,8 @@ describe() {
 	@lain_clock_format) echo 'strftime format for the clock' ;;
 	@lain_status_left_length) echo 'character budget for the left segment' ;;
 	@lain_status_right_length) echo 'character budget for the right segment' ;;
+	@lain_status_right_extra) echo 'raw tmux format appended to the right side' ;;
+	@lain_status_right_extra) echo 'raw tmux format appended to the right side' ;;
 	@lain_poll_interval) echo 'seconds between background polls' ;;
 	@lain_pane_border_status) echo 'off, top or bottom, for per-pane labels' ;;
 	@lain_debug) echo 'keep the generated conf and report its path' ;;
@@ -38,7 +40,8 @@ table() {
 	echo '| Option | Default | Meaning |'
 	echo '| --- | --- | --- |'
 	lain_defaults | while read -r key value; do
-		printf '| `%s` | `%s` | %s |\n' "$key" "$value" "$(describe "$key")"
+		[ -z "$value" ] || value="\`$value\`"
+		printf '| `%s` | %s | %s |\n' "$key" "$value" "$(describe "$key")"
 	done
 }
 

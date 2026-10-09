@@ -21,6 +21,7 @@ _LAIN_DEFAULTS='@lain_status_position bottom
 @lain_clock_format %H:%M
 @lain_status_left_length 40
 @lain_status_right_length 60
+@lain_status_right_extra
 @lain_poll_interval 15
 @lain_pane_border_status off
 @lain_debug off'
@@ -42,11 +43,26 @@ $(
 			awk -v us="$LAIN_US" '\
 			$1 ~ /^@lain_/ {
 				k = $1; sub(/^@lain_/, "", k)
-				$1 = ""; sub(/^ /, "")
-				q = substr($0, 1, 1)
-				if (length($0) > 1 && (q == "\"" || q == "\047") && substr($0, length($0)) == q)
-					$0 = substr($0, 2, length($0) - 2)
-				print k us $0
+				v = $0; sub(/^[^ ]+ ?/, "", v)
+				q = substr(v, 1, 1)
+				if (length(v) > 1 && (q == "\"" || q == "\047") && substr(v, length(v)) == q)
+					v = substr(v, 2, length(v) - 2)
+				else
+					q = ""
+				if (q == "\"") {
+					# tmux show escapes these three inside double quotes
+					o = ""
+					for (i = 1; i <= length(v); i++) {
+						c = substr(v, i, 1)
+						if (c == "\\" && i < length(v) && index("\"$\\", substr(v, i + 1, 1))) {
+							i++
+							c = substr(v, i, 1)
+						}
+						o = o c
+					}
+					v = o
+				}
+				print k us v
 			}'
 	)
 EOF
@@ -83,7 +99,7 @@ lain_setw() {
 
 lain_escape() {
 	case "$1" in
-	*[\"\\]*) printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g' ;;
+	*[\"\\\$]*) printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\$/\\$/g' ;;
 	*) printf '%s' "$1" ;;
 	esac
 }

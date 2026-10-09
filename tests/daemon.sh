@@ -23,6 +23,20 @@ trap cleanup EXIT INT TERM
 
 fail=0
 
+# Foreign content in status-right has to survive every rebuild, raw: the quote
+# and the dollar sign must reach tmux exactly as the user set them.
+# shellcheck disable=SC2016 # expanded by tmux, not here
+XTRA='#(echo "LAIN$XTRA")'
+xtra_tail() {
+	case "$(t show -gv status-right)" in
+	*"$XTRA") printf 'ok    %-28s\n' "$1" ;;
+	*)
+		printf 'FAIL  %s: status-right does not end with the extra\n' "$1"
+		fail=1
+		;;
+	esac
+}
+
 pollers() {
 	_p_all=" $(pgrep -f "$PLUGIN_DIR/src/daemon/poll.sh" 2>/dev/null | tr '\n' ' ')"
 	_p_n=0
@@ -131,7 +145,9 @@ echo "-- daemon lifecycle"
 t -f /dev/null new-session -d -x 120 -y 30 -c "$PLUGIN_DIR"
 t set -g @lain_modules_right "psyche present_day"
 t set -g @lain_poll_interval 2
+t set -g @lain_status_right_extra "$XTRA"
 t run-shell "$PLUGIN_DIR/lain.tmux"
+xtra_tail "extra kept at load"
 
 plan="$(t show -gqv @lain_daemon_modules)"
 if [ "$plan" = "psyche" ]; then
@@ -164,6 +180,7 @@ case "$(t show -gv status-right)" in
 	fail=1
 	;;
 esac
+xtra_tail "extra kept by daemon rebuild"
 
 t set -g @lain_modules_right "coolant psyche present_day"
 t run-shell "$PLUGIN_DIR/lain.tmux"
@@ -217,6 +234,7 @@ else
 	printf 'FAIL  id %s -> %s, plan [%s]\n' "$id_after" "$id_replanned" "$plan_replanned"
 	fail=1
 fi
+xtra_tail "extra kept by replan"
 
 sleep 3
 running="$(pollers)"

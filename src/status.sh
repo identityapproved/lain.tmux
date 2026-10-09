@@ -30,7 +30,8 @@ lain_status_apply() {
 	lain_getv @lain_modules_left _ml
 	lain_getv @lain_modules_right _mr
 	lain_set status-left "$(_lain_side left "$_ml")"
-	lain_set status-right "$(_lain_side right "$_mr")"
+	lain_getv @lain_status_right_extra _sre
+	lain_set status-right "$(_lain_side right "$_mr")${_sre}"
 }
 
 _lain_side() {

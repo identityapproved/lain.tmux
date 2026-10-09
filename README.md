@@ -126,9 +126,15 @@ Set any of these before the plugin loads.
 | `@lain_clock_format` | `%H:%M` | strftime format for the clock |
 | `@lain_status_left_length` | `40` | character budget for the left segment |
 | `@lain_status_right_length` | `60` | character budget for the right segment |
+| `@lain_status_right_extra` |  | raw tmux format appended to the right side |
 | `@lain_poll_interval` | `15` | seconds between background polls |
 | `@lain_pane_border_status` | `off` | off, top or bottom, for per-pane labels |
 | `@lain_debug` | `off` | keep the generated conf and report its path |
+
+lain owns `status-right` and rewrites it on every rebuild, so anything another
+plugin appends there is lost. Put such content in `@lain_status_right_extra`
+instead: it is appended as is, without escaping, survives every rebuild, and
+counts toward `@lain_status_right_length`.
 
 Reload after a change with `prefix + I` under TPM, or by re-sourcing
 `tmux.conf`.
