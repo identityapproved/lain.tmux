@@ -31,6 +31,8 @@ lain_status_apply() {
 	lain_getv @lain_modules_right _mr
 	lain_set status-left "$(_lain_side left "$_ml")"
 	lain_getv @lain_status_right_extra _sre
+	# tmux expands the option itself, so its raw value never round-trips through show and the conf parser.
+	[ -z "$_sre" ] || _sre='#{E:@lain_status_right_extra}'
 	lain_set status-right "$(_lain_side right "$_mr")${_sre}"
 }
 

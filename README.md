@@ -133,8 +133,9 @@ Set any of these before the plugin loads.
 
 lain owns `status-right` and rewrites it on every rebuild, so anything another
 plugin appends there is lost. Put such content in `@lain_status_right_extra`
-instead: it is appended as is, without escaping, survives every rebuild, and
-counts toward `@lain_status_right_length`.
+instead: the bar references it as `#{E:@lain_status_right_extra}`, so tmux
+expands it as written, a change shows without a reload, it survives every
+rebuild, and it counts toward `@lain_status_right_length`.
 
 Reload after a change with `prefix + I` under TPM, or by re-sourcing
 `tmux.conf`.

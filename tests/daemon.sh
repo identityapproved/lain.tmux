@@ -24,11 +24,11 @@ trap cleanup EXIT INT TERM
 fail=0
 
 # Foreign content in status-right has to survive every rebuild, raw: the quote
-# and the dollar sign must reach tmux exactly as the user set them.
-# shellcheck disable=SC2016 # expanded by tmux, not here
-XTRA='#(echo "LAIN$XTRA")'
+# and the dollar sign must reach the drawn bar exactly as the user set them.
+# shellcheck disable=SC2016 # a literal dollar sign, never expanded
+XTRA='#[default]"LAIN$XTRA"'
 xtra_tail() {
-	case "$(t show -gv status-right)" in
+	case "$(t display-message -p '#{E:status-right}')" in
 	*"$XTRA") printf 'ok    %-28s\n' "$1" ;;
 	*)
 		printf 'FAIL  %s: status-right does not end with the extra\n' "$1"
