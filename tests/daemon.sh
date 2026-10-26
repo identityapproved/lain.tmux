@@ -28,10 +28,11 @@ fail=0
 # shellcheck disable=SC2016 # a literal dollar sign, never expanded
 XTRA='#[default]"LAIN$XTRA"'
 xtra_tail() {
-	case "$(t display-message -p '#{E:status-right}')" in
+	_xt_got="$(t display-message -p '#{E:status-right}')"
+	case "$_xt_got" in
 	*"$XTRA") printf 'ok    %-28s\n' "$1" ;;
 	*)
-		printf 'FAIL  %s: status-right does not end with the extra\n' "$1"
+		printf 'FAIL  %s: status-right does not end with the extra\n      got: %s\n' "$1" "$_xt_got"
 		fail=1
 		;;
 	esac
