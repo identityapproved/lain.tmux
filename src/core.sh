@@ -33,11 +33,11 @@ lain_require_tmux() {
 	[ -n "$_rt_minor" ] || _rt_minor=0
 
 	if [ "$_rt_major" -gt 3 ] ||
-		{ [ "$_rt_major" -eq 3 ] && [ "$_rt_minor" -ge 4 ]; }; then
+		{ [ "$_rt_major" -eq 3 ] && [ "$_rt_minor" -ge 5 ]; }; then
 		return 0
 	fi
 
-	tmux display-message "lain.tmux: needs tmux 3.4 or newer (found $(tmux -V))"
+	tmux display-message "lain.tmux: needs tmux 3.5 or newer (found $(tmux -V))"
 	return 1
 }
 

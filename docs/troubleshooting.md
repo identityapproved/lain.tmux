@@ -46,7 +46,7 @@ back to `>` and `<`, which is legible but not what the screenshots show.
 tmux display-message -p '#{version}'
 ```
 
-Below 3.4 it refuses on purpose and says so. A theme that half-applies leaves
+Below 3.5 it refuses on purpose and says so. A theme that half-applies leaves
 tmux's defaults showing through in exactly the places a theme exists to cover,
 which is worse than not loading.
 

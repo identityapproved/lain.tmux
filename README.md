@@ -7,7 +7,7 @@ carries content and selection - the active window, a copy-mode selection, a
 search match. The two ramps never touch: they sit close in luminance, and rose
 text on an ochre fill goes muddy.
 
-Requires tmux 3.4 or newer.
+Requires tmux 3.5 or newer.
 
 ## Install
 

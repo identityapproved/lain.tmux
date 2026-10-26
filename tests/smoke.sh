@@ -186,7 +186,7 @@ gate() {
 }
 
 gate "3.5a" accept
-gate "3.4" accept
+gate "3.4" refuse
 gate "4.0" accept
 gate "next-3.6" accept
 gate "3.3a" refuse
