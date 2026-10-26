@@ -18,6 +18,8 @@ lain_window_apply() {
 			"#[fg=${c_fg_on_active},bg=${c_bg_active},bold] ${_idx}#W$(_lain_flags fill "${c_fg_on_active}") #[default]"
 	fi
 
+	# tmux 3.6+ defaults this to underscore, which lain's own active fill replaces.
+	lain_setw window-status-current-style "default"
 	lain_setw window-status-bell-style "default"
 	lain_setw window-status-activity-style "default"
 }
