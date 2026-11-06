@@ -194,6 +194,8 @@ describes a segment and never emits format itself:
 ```sh
 lain_mod_uptime() {
     mod_icon="clock"          # glyph key, or empty
+    mod_icon_alt=""           # glyph key shown while mod_icon_cond holds
+    mod_icon_cond=""          # condition for mod_icon_alt
     mod_text='#{host}'        # tmux format for the body
     mod_fg="$c_fg_on_active"  # text colour when filled
     mod_bg="$c_fg_content"    # fill colour, empty for a flat segment

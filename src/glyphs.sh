@@ -3,7 +3,8 @@
 
 lain_glyph() {
 	case "$_lain_glyphset:$1" in
-	nerd:session) printf '\356\202\245' ;;
+	nerd:session) printf '\356\253\247' ;;
+	nerd:session_active) printf '\356\251\260' ;;
 	nerd:prefix) printf '\356\254\230' ;;
 	nerd:node) printf '\357\210\250' ;;
 	nerd:path) printf '\357\204\225' ;;

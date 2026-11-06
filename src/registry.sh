@@ -12,6 +12,8 @@ lain_modules_load() {
 
 lain_mod_reset() {
 	mod_icon=""
+	mod_icon_alt=""
+	mod_icon_cond=""
 	mod_text=""
 	mod_fg="$c_fg_primary"
 	mod_bg=""
@@ -53,7 +55,13 @@ lain_compile() {
 		mod_text="#{@lain_cache_${mod_dynamic}}"
 	fi
 
-	_lc_body="$(lain_icon "$mod_icon")$mod_text"
+	_lc_icon="$(lain_icon "$mod_icon")"
+	if [ -n "$mod_icon_cond" ]; then
+		_lc_icon_alt="$(lain_icon "$mod_icon_alt")"
+		[ -n "$_lc_icon_alt" ] && [ "$_lc_icon_alt" != "$_lc_icon" ] &&
+			_lc_icon="#{?${mod_icon_cond},${_lc_icon_alt},${_lc_icon}}"
+	fi
+	_lc_body="${_lc_icon}$mod_text"
 
 	if [ "$_lc_filled" = "yes" ] && [ -n "$mod_bg" ]; then
 		seg_bg="$mod_bg"

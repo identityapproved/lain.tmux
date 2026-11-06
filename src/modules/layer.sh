@@ -3,6 +3,8 @@
 
 lain_mod_layer() {
 	mod_icon="session"
+	mod_icon_alt="session_active"
+	mod_icon_cond="client_prefix"
 	mod_text='#S'
 	mod_fg="$c_fg_on_active"
 	mod_bg="$c_bg_active"
