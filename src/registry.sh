@@ -77,6 +77,9 @@ lain_compile() {
 	[ -n "$mod_attr" ] && _lc_alt="${_lc_alt},${mod_attr}"
 
 	seg_gate="$mod_gate"
+	seg_cond="$mod_cond"
+	seg_alt_bg=""
+	[ -n "$seg_bg" ] && [ -n "$mod_cond" ] && seg_alt_bg="${mod_alt_bg:-$mod_bg}"
 
 	if [ -n "$mod_cond" ]; then
 		seg_text="#{?${mod_cond},#[$(lain_esc_comma "$_lc_alt")],#[$(lain_esc_comma "$_lc_base")]} ${_lc_body} "

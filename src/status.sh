@@ -44,7 +44,7 @@ _lain_side() {
 	for _ls_m in $_ls_list; do
 		lain_module_known "$_ls_m" || continue
 		lain_compile "$_ls_m" "$_filled" || continue
-		_ls_acc="${_ls_acc}${seg_bg}${LAIN_US}${seg_gate}${LAIN_US}${seg_text}
+		_ls_acc="${_ls_acc}${seg_bg}${LAIN_US}${seg_gate}${LAIN_US}${seg_cond}${LAIN_US}${seg_alt_bg}${LAIN_US}${seg_text}
 "
 	done
 
@@ -55,52 +55,91 @@ _lain_side() {
 _lain_join() {
 	_lj_side="$1"
 	_lj_acc="$2"
-	_lj_prev=""
-	_lj_first="yes"
 
 	_lj_wire="#[fg=${c_rule},nobold] $(lain_glyph wire) "
+	if [ "$_lj_side" = "left" ]; then _lj_dir="right"; else _lj_dir="left"; fi
 
-	printf '%s' "$_lj_acc" | while IFS="$LAIN_US" read -r _lj_bg _lj_gate _lj_text; do
-		[ -n "$_lj_text" ] || continue
-		: "${_lj_bg:=$_bar_bg}"
-		_lj_open=""
-		_lj_close=""
+	printf '%s' "$_lj_acc" | {
+		_lj_prev="$_bar_bg"
+		_lj_prev_cond=""
+		_lj_prev_alt=""
+		_lj_first="yes"
 
-		case "$_sep" in
-		wire)
-			[ "$_lj_first" = "yes" ] && [ -z "$_lj_gate" ] || _lj_open="$_lj_wire"
-			;;
-		powerline)
-			if [ "$_lj_side" = "left" ]; then
-				[ "$_lj_first" = "yes" ] ||
-					_lj_open="$(_lain_pl right "${_lj_prev:-$_bar_bg}" "$_lj_bg")"
-				[ -n "$_lj_gate" ] &&
-					_lj_close="$(_lain_pl right "$_lj_bg" "${_lj_prev:-$_bar_bg}")"
+		while IFS="$LAIN_US" read -r _lj_bg _lj_gate _lj_cond _lj_alt _lj_text; do
+			[ -n "$_lj_text" ] || continue
+			: "${_lj_bg:=$_bar_bg}"
+			: "${_lj_alt:=$_lj_bg}"
+			_lj_open=""
+			_lj_close=""
+
+			# Under its gate, the previous segment wears its alternate colour
+			# when it switches on the same condition.
+			_lj_gprev="$_lj_prev"
+			[ -n "$_lj_gate" ] && [ "$_lj_prev_cond" = "$_lj_gate" ] &&
+				_lj_gprev="$_lj_prev_alt"
+
+			case "$_sep" in
+			wire)
+				[ "$_lj_first" = "yes" ] && [ -z "$_lj_gate" ] || _lj_open="$_lj_wire"
+				;;
+			powerline)
+				if [ -n "$_lj_gate" ] && [ "$_lj_first" = "no" ] &&
+					[ "$_lj_gprev" = "$_lj_bg" ]; then
+					# Same colour as its neighbour: one block, no arrow, no pad.
+					case "$_lj_text" in
+					*"] "*) _lj_text="${_lj_text%%] *}]${_lj_text#*] }" ;;
+					esac
+				elif [ -n "$_lj_gate" ]; then
+					[ "$_lj_side" = "left" ] && [ "$_lj_first" = "yes" ] ||
+						_lj_open="$(_lain_pl_pair "$_lj_dir" "$_lj_gprev" "$_lj_bg")"
+					_lj_close="$(_lain_pl_pair "$_lj_dir" "$_lj_bg" "$_lj_gprev")"
+				elif [ "$_lj_side" = "right" ] || [ "$_lj_first" = "no" ]; then
+					_lj_open="$(_lain_pl_prev "$_lj_dir" "$_lj_bg")"
+				fi
+				;;
+			esac
+
+			_lj_unit="${_lj_open}${_lj_text}${_lj_close}"
+
+			if [ -n "$_lj_gate" ]; then
+				printf '#{?%s,%s,}' "$_lj_gate" "$(lain_esc_comma "$_lj_unit")"
 			else
-				_lj_open="$(_lain_pl left "$_lj_bg" "${_lj_prev:-$_bar_bg}")"
-				[ -n "$_lj_gate" ] &&
-					_lj_close="$(_lain_pl left "${_lj_prev:-$_bar_bg}" "$_lj_bg")"
+				printf '%s' "$_lj_unit"
+				_lj_prev="$_lj_bg"
+				_lj_prev_cond="$_lj_cond"
+				_lj_prev_alt="$_lj_alt"
+				_lj_first="no"
 			fi
-			;;
-		esac
+		done
 
-		_lj_unit="${_lj_open}${_lj_text}${_lj_close}"
-
-		if [ -n "$_lj_gate" ]; then
-			printf '#{?%s,%s,}' "$_lj_gate" "$(lain_esc_comma "$_lj_unit")"
-		else
-			printf '%s' "$_lj_unit"
-			_lj_prev="$_lj_bg"
-			_lj_first="no"
+		if [ "$_sep" = "powerline" ] && [ "$_lj_side" = "left" ]; then
+			_lain_pl_prev right "$_bar_bg"
 		fi
-	done
-
-	if [ "$_sep" = "powerline" ] && [ "$_lj_side" = "left" ]; then
-		_lj_last="$(printf '%s' "$_lj_acc" | awk -F"$LAIN_US" '$2 == "" && $1 != "" { b = $1 } END { print b }')"
-		[ -n "$_lj_last" ] || _lj_last="$_bar_bg"
-		_lain_pl right "$_lj_last" "$_bar_bg"
-	fi
+	}
 	printf '#[default]'
+}
+
+# Arrow from the previous segment into one of colour $3 (or out of $2 into $3,
+# reading left to right), pointing $1.
+_lain_pl_pair() {
+	if [ "$1" = "right" ]; then
+		_lain_pl right "$2" "$3"
+	else
+		_lain_pl left "$3" "$2"
+	fi
+}
+
+# Arrow from the previous ungated segment into colour $2, switching with that
+# segment's own condition.
+_lain_pl_prev() {
+	_pp_base="$(_lain_pl_pair "$1" "$_lj_prev" "$2")"
+	if [ -n "$_lj_prev_cond" ] && [ "$_lj_prev_alt" != "$_lj_prev" ]; then
+		_pp_alt="$(_lain_pl_pair "$1" "$_lj_prev_alt" "$2")"
+		printf '#{?%s,%s,%s}' "$_lj_prev_cond" \
+			"$(lain_esc_comma "$_pp_alt")" "$(lain_esc_comma "$_pp_base")"
+	else
+		printf '%s' "$_pp_base"
+	fi
 }
 
 _lain_pl() {
