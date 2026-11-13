@@ -10,8 +10,10 @@ lain_surfaces_apply() {
 	lain_set display-panes-colour "$c_fg_dim"
 	lain_set display-panes-active-colour "$c_border_active"
 
-	lain_set message-style "bg=${c_bg_bar},fg=${c_fg_content}"
-	lain_set message-command-style "bg=${c_bg_bar},fg=${c_fg_primary}"
+	# fill paints the whole line; without it the window list shows past the text.
+	lain_set message-style "bg=${c_bg_bar},fg=${c_fg_content},fill=${c_bg_bar}"
+	lain_set message-command-style \
+		"bg=${c_bg_bar},fg=${c_fg_primary},fill=${c_bg_bar}"
 
 	lain_set mode-style "bg=${c_select},fg=${c_select_fg}"
 	lain_set copy-mode-match-style "bg=${c_bg_surface},fg=${c_fg_content}"
