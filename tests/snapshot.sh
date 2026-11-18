@@ -9,6 +9,24 @@ GOLDEN="tests/golden"
 UPDATE="${1:-}"
 WIDTH=100
 HEIGHT=12
+# Golden files are recorded on the version CI pins; other releases place the
+# same colours differently over blank cells, so they compare text only.
+REFERENCE="3.5a"
+VERSION="$(tmux -V | cut -d' ' -f2)"
+EXACT="yes"
+if [ "$VERSION" != "$REFERENCE" ]; then
+	EXACT="no"
+	if [ "$UPDATE" = "--update" ]; then
+		echo "refusing --update on tmux $VERSION; goldens are tmux $REFERENCE"
+		exit 1
+	fi
+	echo "tmux $VERSION is not the reference $REFERENCE: comparing text only"
+fi
+
+ESC="$(printf '\033')"
+_plain() {
+	sed "s/${ESC}\[[0-9;]*m//g"
+}
 
 fail=0
 updated=0
@@ -55,6 +73,9 @@ snap() {
 	fi
 	if [ "$got" = "$(cat "$file")" ]; then
 		printf 'ok       %s\n' "$name"
+	elif [ "$EXACT" = "no" ] &&
+		[ "$(printf '%s\n' "$got" | _plain)" = "$(_plain <"$file")" ]; then
+		printf 'ok       %s (text only)\n' "$name"
 	else
 		printf 'FAIL     %s\n' "$name"
 		printf '  want:  %s\n' "$(cat "$file")"
