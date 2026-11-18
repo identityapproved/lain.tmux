@@ -11,6 +11,7 @@ lain_glyph() {
 	nerd:clock) printf '\357\200\227' ;;
 	nerd:cpu) printf '\357\222\274' ;;
 	nerd:battery) printf '\357\211\200' ;;
+	nerd:battery_low) printf '\357\211\203' ;;
 	nerd:branch) printf '\356\234\245' ;;
 	nerd:music) printf '\357\200\201' ;;
 	nerd:net) printf '\357\203\254' ;;

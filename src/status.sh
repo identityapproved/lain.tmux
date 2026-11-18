@@ -94,7 +94,7 @@ _lain_join() {
 						_lj_open="$(_lain_pl_pair "$_lj_dir" "$_lj_gprev" "$_lj_bg")"
 					_lj_close="$(_lain_pl_pair "$_lj_dir" "$_lj_bg" "$_lj_gprev")"
 				elif [ "$_lj_side" = "right" ] || [ "$_lj_first" = "no" ]; then
-					_lj_open="$(_lain_pl_prev "$_lj_dir" "$_lj_bg")"
+					_lj_open="$(_lain_pl_into "$_lj_dir" "$_lj_bg" "$_lj_cond" "$_lj_alt")"
 				fi
 				;;
 			esac
@@ -140,6 +140,25 @@ _lain_pl_prev() {
 	else
 		printf '%s' "$_pp_base"
 	fi
+}
+
+# Arrow into a segment of colour $2 that wears $4 under its own condition $3.
+_lain_pl_into() {
+	if [ -z "$3" ] || [ "$4" = "$2" ]; then
+		_lain_pl_prev "$1" "$2"
+		return 0
+	fi
+	printf '#{?%s,%s,%s}' "$3" \
+		"$(_lain_pl_arm "$(_lain_pl_prev "$1" "$4")")" \
+		"$(_lain_pl_arm "$(_lain_pl_prev "$1" "$2")")"
+}
+
+# A nested conditional is already escaped for its own level; a bare style is not.
+_lain_pl_arm() {
+	case "$1" in
+	"#{?"*) printf '%s' "$1" ;;
+	*) lain_esc_comma "$1" ;;
+	esac
 }
 
 _lain_pl() {

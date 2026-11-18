@@ -23,6 +23,7 @@ _LAIN_DEFAULTS='@lain_status_position bottom
 @lain_status_right_length 60
 @lain_status_right_extra
 @lain_poll_interval 15
+@lain_coolant_low 20
 @lain_pane_border_status off
 @lain_debug off'
 

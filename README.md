@@ -56,7 +56,7 @@ set -g @lain_modules_right "wired_path node present_day"
 | `wired_path` | current directory | Basename; `@lain_path_full` for the whole path. |
 | `present_day` | date and clock | On by default. |
 | `psyche` | one-minute load average | Polled. |
-| `coolant` | battery charge | Polled. Absent on a machine with no battery. |
+| `coolant` | battery charge | Polled. Absent on a machine with no battery. Turns to the alert fill, bold, at or below `@lain_coolant_low` percent (default 20, 0 disables). |
 | `layer_git` | branch of the active pane's repo | Polled. Needs `git`. |
 | `duvet` | now playing | Polled. Needs `playerctl`, or `nowplaying-cli` on macOS. Asks every player and prefers whichever is playing. |
 | `accela` | network throughput | Polled. Down over up, sampled across one second. Linux only. |
@@ -128,6 +128,7 @@ Set any of these before the plugin loads.
 | `@lain_status_right_length` | `60` | character budget for the right segment |
 | `@lain_status_right_extra` |  | raw tmux format appended to the right side |
 | `@lain_poll_interval` | `15` | seconds between background polls |
+| `@lain_coolant_low` | `20` | battery percent at or below which coolant turns alert; 0 disables |
 | `@lain_pane_border_status` | `off` | off, top or bottom, for per-pane labels |
 | `@lain_debug` | `off` | keep the generated conf and report its path |
 

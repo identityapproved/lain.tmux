@@ -30,6 +30,7 @@ describe() {
 	@lain_status_right_extra) echo 'raw tmux format appended to the right side' ;;
 	@lain_status_right_extra) echo 'raw tmux format appended to the right side' ;;
 	@lain_poll_interval) echo 'seconds between background polls' ;;
+	@lain_coolant_low) echo 'battery percent at or below which coolant turns alert; 0 disables' ;;
 	@lain_pane_border_status) echo 'off, top or bottom, for per-pane labels' ;;
 	@lain_debug) echo 'keep the generated conf and report its path' ;;
 	*) echo '' ;;

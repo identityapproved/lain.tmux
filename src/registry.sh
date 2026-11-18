@@ -21,6 +21,8 @@ lain_mod_reset() {
 	mod_cond=""
 	mod_alt_fg=""
 	mod_alt_bg=""
+	mod_alt_attr=""
+	mod_alt_flat=""
 	mod_gate=""
 	mod_deps=""
 	mod_dynamic=""
@@ -70,11 +72,12 @@ lain_compile() {
 	else
 		seg_bg=""
 		_lc_base="fg=${mod_bg:-$mod_fg}"
-		_lc_alt="fg=${mod_alt_bg:-${mod_alt_fg:-${mod_bg:-$mod_fg}}}"
+		_lc_alt="fg=${mod_alt_flat:-${mod_alt_bg:-${mod_alt_fg:-${mod_bg:-$mod_fg}}}}"
 	fi
 
 	[ -n "$mod_attr" ] && _lc_base="${_lc_base},${mod_attr}"
-	[ -n "$mod_attr" ] && _lc_alt="${_lc_alt},${mod_attr}"
+	_lc_aa="${mod_alt_attr:-$mod_attr}"
+	[ -n "$_lc_aa" ] && _lc_alt="${_lc_alt},${_lc_aa}"
 
 	seg_gate="$mod_gate"
 	seg_cond="$mod_cond"
