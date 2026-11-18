@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Options: parsed once into shell variables, written once as a sourced conf.
+# Options: parsed once into shell variables, applied once as one sourced conf.
 
 LAIN_US=$(printf '\037')
 
@@ -71,16 +71,17 @@ lain_is_on() {
 }
 
 lain_out_init() {
-	_lain_out="${TMPDIR:-/tmp}/lain-tmux.$$.conf"
-	: >"$_lain_out"
+	_lain_out=""
 }
 
 lain_set() {
-	printf 'set -g %s "%s"\n' "$1" "$(lain_escape "$2")" >>"$_lain_out"
+	_lain_out="${_lain_out}set -g $1 \"$(lain_escape "$2")\"
+"
 }
 
 lain_setw() {
-	printf 'setw -g %s "%s"\n' "$1" "$(lain_escape "$2")" >>"$_lain_out"
+	_lain_out="${_lain_out}setw -g $1 \"$(lain_escape "$2")\"
+"
 }
 
 lain_escape() {
@@ -105,11 +106,13 @@ lain_esc_comma() {
 }
 
 lain_flush() {
-	[ -s "$_lain_out" ] || return 0
-	tmux source-file "$_lain_out"
+	[ -n "$_lain_out" ] || return 0
 	if lain_is_on @lain_debug; then
-		tmux display-message "lain.tmux: kept $_lain_out"
+		_lf_file="${TMPDIR:-/tmp}/lain-tmux.$$.conf"
+		printf '%s' "$_lain_out" >"$_lf_file"
+		tmux source-file "$_lf_file"
+		tmux display-message "lain.tmux: kept $_lf_file"
 	else
-		rm -f "$_lain_out"
+		printf '%s' "$_lain_out" | tmux source-file -
 	fi
 }

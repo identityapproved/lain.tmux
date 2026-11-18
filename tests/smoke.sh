@@ -194,6 +194,25 @@ gate "3.0" refuse
 gate "2.9a" refuse
 gate "master" accept
 
+echo
+echo "-- a failing module leaves no temp file"
+broken="$SHIMDIR/plugin"
+mkdir -p "$broken/tmp"
+cp -R "$PLUGIN_DIR/lain.tmux" "$PLUGIN_DIR/src" "$PLUGIN_DIR/palettes" "$broken/"
+# shellcheck disable=SC2016 # the module must expand it, not this shell
+printf 'lain_mod_node() { : "$lain_unbound"; }\n' >>"$broken/src/modules/node.sh"
+t set -g @lain_modules_right "node"
+if TMPDIR="$broken/tmp" "$broken/src/core.sh" "$broken" >/dev/null 2>&1; then
+	echo "FAIL  broken module did not abort the apply"
+	fail=1
+elif [ -n "$(find "$broken/tmp" -name 'lain-tmux.*.conf')" ]; then
+	echo "FAIL  conf left behind after a failed apply"
+	fail=1
+else
+	printf 'ok    %-32s\n' "no conf left on failure"
+fi
+t set -gu @lain_modules_right
+
 if [ "$fail" -ne 0 ]; then
 	echo
 	echo "smoke test failed"
